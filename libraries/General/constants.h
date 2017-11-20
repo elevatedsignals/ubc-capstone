@@ -6,7 +6,7 @@
 #define FALSE 0
 
 #define PIN_DHT 2
-#define PIN_CO2 0
+#define PIN_CO2 A0
 #define PIN_AIRFLOW 0
 #define PIN_PAR 0
 
