@@ -10,7 +10,8 @@ struct TH {
 };
 
 /*
- * Purpose: Determines whether temp and humidity data have been obtained.
+ * Purpose: Determines whether temp and humidity data
+ * have been obtained.
  * Output: true or false
  */
 int is_ready(struct TH t_h) {

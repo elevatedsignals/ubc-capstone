@@ -4,9 +4,10 @@
 #include "TH.h"
 
 /*
- * Purpose: Initializes the DHT sensor and polls the sensor till it obtains
- *          temperature and humidity data.
- * Output: the TH struct containing all sensor data
+ * Purpose: initializes the DHT sensor and polls the sensor till it obtains
+ * temperature and humidity data. This needs to be in a .ino file
+ * (not c file) as DHT library code is in c++.
+ * Output: the TH struct containing all DHT sensor data
  */
  struct TH init_dht(void) {
 
