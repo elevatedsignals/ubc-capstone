@@ -16,7 +16,7 @@ int is_co2_ready(struct CO2 co2_h) {
 
 /*
  * Purpose: Gets the CO2 concentration value
- * Output: temperature in Celsius
+ * Output: CO2 concentration in ppm
  */
 float get_concentration(struct CO2 co2_h) {
   return co2_h.concentration;
