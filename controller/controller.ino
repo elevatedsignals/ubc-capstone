@@ -59,6 +59,7 @@
   struct CO2 init_ir_co2(void) {
     struct CO2 co2;
     float co2_conc;
+    int sensor_value;
 
     co2.has_data = FALSE;
 
@@ -69,7 +70,7 @@
       // can only poll every 100 milliseconds
       delay(100);
       // read voltage
-      int sensor_value = analogRead(PIN_CO2);
+      sensor_value = analogRead(PIN_CO2);
       attempt++;
     } while(isnan(sensor_value) & attempt < 10);
 
