@@ -15,6 +15,5 @@ script:
 notifications:
   email:
       recipients:
-        - rosamohammadi@hotmail.com
       on_success: change
       on_failure: change
