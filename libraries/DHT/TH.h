@@ -5,6 +5,8 @@
 #define TRUE 1
 #define FALSE 0
 
+/* humidity and temp will be initialized to -1000 to
+  detect errors obtaining data as those are invalid values */
 struct TH {
   volatile float h; // humidity
   volatile float t; // temperature
@@ -24,10 +26,11 @@ float get_temp(struct TH t_h, int *error) {
 
 /*
  * Purpose: Gets the humidity data
- * Output: humidity percentage
+ * Output: relative humidity percentage
  */
 float get_humidity(struct TH t_h, int *error) {
-  if (t_h.h != -1000) {
+  // relative humidity must be 0+
+  if (t_h.h >= 0) {
     return t_h.h;
   }
   *error = TRUE;

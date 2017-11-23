@@ -11,6 +11,8 @@
 */
 struct TH init_dht(void) {
 
+  /* to determine whether a temp and humidity reading was obtained, we
+   initialize them to -1000 since those are invalid values */
   struct TH t_h = {-1000, -1000};
   float h;
   float t;
