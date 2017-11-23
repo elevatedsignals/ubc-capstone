@@ -3,6 +3,10 @@
 #include "DHT.h"
 #include "TH.h"
 
+#define ERROR_TEMP "DHT Temperature sensor"
+#define ERROR_HUMIDITY "DHT Humidity sensor"
+#define ERROR_HEATINDEX "DHT Heat Index calculator"
+
 /*
  * Purpose: initializes the DHT sensor and polls the sensor till it obtains
  * temperature and humidity data. This needs to be in a .ino file
@@ -11,12 +15,10 @@
  */
  struct TH init_dht(void) {
 
-   struct TH t_h;
+   struct TH t_h = {-1000, -1000, -1000};
    float h;
    float t;
    float hi;
-
-   t_h.has_data = FALSE;
 
    // initialize DHT sensor
    DHT dht(PIN_DHT, DHTTYPE);
@@ -35,18 +37,15 @@
      attempt++;
    } while((isnan(h) || isnan(t)) & attempt < 10);
 
-   // do error checking
-   if (isnan(h) || isnan(t)) {
-     return t_h; // is_ready = false
-   }
-
    // compute heat index in Celsius (isFahreheit = false)
-   hi = dht.computeHeatIndex(t, h, false);
+   //hi = dht.computeHeatIndex(t, h, false);
 
-   t_h.t = t;
-   t_h.h = h;
-   t_h.hi = hi;
-   t_h.has_data = TRUE;
+   if (!isnan(t)) {
+     t_h.t = t;
+   }
+   if (!isnan(h)) {
+     t_h.h = h;
+   }
 
    return t_h;
  }
@@ -54,13 +53,27 @@
 void setup() {
   Serial.begin(9600);
 
-  // DHT temperature and humidity code
+  int error;
+
+  /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
 
-  if(is_ready(t_h)) {
-    float t = get_temp(t_h);
-    float h = get_humidity(t_h);
-    float hi = get_heatindex(t_h);
+    error = FALSE;
+    float t = get_temp(t_h, &error);
+    if (error) {
+      Serial.print(ERROR_TEMP);
+    }
+    error = FALSE;
+    float h = get_humidity(t_h, &error);
+    if (error) {
+      Serial.print(ERROR_HUMIDITY);
+    }
+    /*
+    error = FALSE;
+    float hi = get_heatindex(t_h, &error);
+    if (error) {
+      Serial.print(ERROR_HEATINDEX);
+    }*/
 
     Serial.print("Humidity: ");
     Serial.print(h);
@@ -68,13 +81,9 @@ void setup() {
     Serial.print("Temperature: ");
     Serial.print(t);
     Serial.print(" *C ");
-    Serial.print("Heat index: ");
+    /*Serial.print("Heat index: ");
     Serial.print(hi);
-    Serial.print(" *C ");
-  }
-  else {
-    Serial.print("Error reading DHT sensor");
-  }
+    Serial.print(" *C ");*/
 
 }
 
