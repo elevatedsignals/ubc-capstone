@@ -14,6 +14,6 @@ script:
   - arduino --verify --board arduino:avr:pro16MHzatmega328 controller/controller.ino
 notifications:
   email:
-      recipients:
+      recipients: moshelawlor@gmail.com
       on_success: change
       on_failure: change

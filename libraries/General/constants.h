@@ -5,10 +5,11 @@
 #define TRUE 1
 #define FALSE 0
 
-#define PIN_DHT 2
-#define PIN_CO2 A0
 #define PIN_AIRFLOW 0
+#define PIN_CO2 A0
+#define PIN_DHT 2
 #define PIN_PAR 0
+#define PIN_SD 10
 
 #define DHTTYPE DHT22
 
