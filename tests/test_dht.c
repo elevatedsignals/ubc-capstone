@@ -83,4 +83,16 @@ int main(void) {
   else {
     printf("Fail 3: humidity\n");
   }
+
+  // humidity over 100 is invalid, should return error
+  error = FALSE;
+  h = (float) 101;
+  t_h.h = h;
+  get_humidity(t_h, &error);
+  if (error) {
+    printf("Pass 4: humidity\n");
+  }
+  else {
+    printf("Fail 4: humidity\n");
+  }
 }

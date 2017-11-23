@@ -30,7 +30,7 @@ float get_temp(struct TH t_h, int *error) {
  */
 float get_humidity(struct TH t_h, int *error) {
   // relative humidity must be 0+
-  if (t_h.h >= 0) {
+  if (t_h.h >= 0 & t_h.h <= 100) {
     return t_h.h;
   }
   *error = TRUE;
