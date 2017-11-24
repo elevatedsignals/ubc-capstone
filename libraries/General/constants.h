@@ -12,4 +12,7 @@
 
 #define DHTTYPE DHT22
 
+#define ERROR_TEMP "Error: DHT Temperature sensor"
+#define ERROR_HUMIDITY "Error: DHT Humidity sensor"
+
 #endif
