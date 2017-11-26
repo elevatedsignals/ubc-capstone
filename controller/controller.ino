@@ -133,13 +133,11 @@
    
    return sd;
   }
-  
 
 void setup() {
   Serial.begin(9600);
   // set default reference voltage (5V)
   analogReference(DEFAULT);
-  SD.remove("data.txt");
 
   int error = FALSE;
 
@@ -154,9 +152,11 @@ void setup() {
 
     // Reads from SD card
     read_sd(sd, error);
+
+    SD.remove("data.txt");
   } 
 
-Serial.println("Finished");
+  Serial.println("Finished");
 
 }
 

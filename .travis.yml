@@ -12,7 +12,6 @@ install:
   - arduino --install-library "SD"
 script:
   - arduino --verify --board arduino:avr:uno controller/controller.ino
-  - arduino --verify --board arduino:avr:pro controller/controller.ino
 notifications:
   email:
       recipients: moshelawlor@gmail.com

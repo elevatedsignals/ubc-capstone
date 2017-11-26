@@ -21,7 +21,7 @@ int write_sd(struct SD_card sd, float temperature_data, float humidity_data, flo
 	
   // check that file opened properly
   if(sd.write_file) {
-    
+	
 	sd.write_file.print("{ \"temperature\":");
 	if(temperature_data == ERROR_VALUE) {
       sd.write_file.print("NaN");
@@ -77,14 +77,15 @@ int read_sd(struct SD_card sd, int &error){
 	  Serial.write(sd.read_file.read());
 	}
 		
-	sd.read_file.close();
-	}
+  }
   else {
     // read unsuccessful
 	error = TRUE;
+	sd.read_file.close();
 	return 0; 
   }
 
+  sd.read_file.close();
   return 1;
 }
 	
