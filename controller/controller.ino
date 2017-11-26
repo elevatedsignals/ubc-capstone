@@ -106,25 +106,32 @@
   * Purpose: Initialize the SD card and allows for reading and writing
   * Output: N/A
   */
- struct SD_card init_sd(String file_name) {
+ struct SD_card init_sd(String file_name, int &error) {
    	 
    struct SD_card sd;
    sd.file_name = file_name;	
-   sd.is_ready = FALSE;
   
    // Note that even if it's not used as the CS pin, the hardware SS pin 
    // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
    // or the SD library functions will not work. 
    pinMode(PIN_SD, OUTPUT);
+   pinMode(PIN_SD_CHECK, INPUT);
  
-   // check if initialization is complete
-   if (!SD.begin(PIN_SD)) {
-    // initialization failed
-	   return sd;
+   // check if initialization is complete, and that an SD card is inserted
+   if (SD.begin(PIN_SD) && digitalRead(PIN_SD_CHECK)) {
+    Serial.println("Initialization Succeeded");
    }
-
-   sd.is_ready = TRUE;
-   	return sd;
+   else if(!digitalRead(PIN_SD_CHECK)) {
+     Serial.println("Error: No SD Card Inserted");
+     error = TRUE;
+    }
+    
+   else {
+     Serial.println("Error: Failed to initialize SD Card");
+     error = TRUE;
+   }
+   
+   return sd;
   }
   
 
@@ -132,60 +139,24 @@ void setup() {
   Serial.begin(9600);
   // set default reference voltage (5V)
   analogReference(DEFAULT);
+  SD.remove("data.txt");
 
-  // DHT temperature and humidity code
-  struct TH t_h = init_dht();
+  int error = FALSE;
 
-  // CO2 concentration code
-  struct CO2 co2 = init_ir_co2();
-  
-  // SD card code
-  struct SD_card sd = init_sd("beans.txt");
+  struct SD_card sd = init_sd("data.txt", error);
 
-  if(is_ready(t_h)) {
-    float t = get_temp(t_h);
-    float h = get_humidity(t_h);
-    float hi = get_heatindex(t_h);
-
-    Serial.print("Humidity: ");
-    Serial.print(h);
-    Serial.print(" \t");
-    Serial.print("Temperature: ");
-    Serial.print(t);
-    Serial.print(" *C ");
-    Serial.print("Heat index: ");
-    Serial.print(hi);
-    Serial.print(" *C ");
-  }
-  else {
-    Serial.print("Error reading DHT sensor");
-  }
-
-  Serial.print("\n");
-
-  if(is_co2_ready(co2)) {
-    float co2_conc = get_concentration(co2);
-
-    Serial.print("CO2 Concentration: ");
-    Serial.print(co2_conc);
-    Serial.print(" ppm");
-  }
-  else {
-    Serial.print("Error reading CO2 sensor");
-  }
-  
-  Serial.print("\n");
-
-  if(sd_is_ready(sd)) {
-    for(int i =0; i < 255; ++i){
-      write_sd(sd, i);
+  // writes/reads to SD Card if initialized properly
+  if(!error) {
+    Serial.println("Begin writing");
+    for(float i = 0; i < 10; ++i){
+      write_sd(sd, i, i, i, error);
     }
-	// Prints out all values written to SD Card
-    read_sd(sd);
+
+    // Reads from SD card
+    read_sd(sd, error);
   } 
-  else {
-    Serial.print("Error reading SD card");  
-  }
+
+Serial.println("Finished");
 
 }
 

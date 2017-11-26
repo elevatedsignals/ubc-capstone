@@ -10,6 +10,7 @@
 #define PIN_DHT 2
 #define PIN_PAR 0
 #define PIN_SD 10
+#define PIN_SD_CHECK 9
 
 #define DHTTYPE DHT22
 
