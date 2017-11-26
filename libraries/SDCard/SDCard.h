@@ -11,6 +11,38 @@ struct SD_card {
 };
 
 /*
+ * Purpose: Initialize the SD card and allows for reading and writing
+ * Output: N/A
+ */
+ struct SD_card init_sd(String file_name, int &error) {
+   	 
+   struct SD_card sd;
+   sd.file_name = file_name;	
+  
+   // Note that even if it's not used as the CS pin, the hardware SS pin 
+   // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
+   // or the SD library functions will not work. 
+   pinMode(PIN_SD, OUTPUT);
+   pinMode(PIN_SD_CHECK, INPUT);
+ 
+   // check if initialization is complete, and that an SD card is inserted
+   if (SD.begin(PIN_SD) && digitalRead(PIN_SD_CHECK)) {
+    Serial.println("Initialization Succeeded");
+   }
+   else if(!digitalRead(PIN_SD_CHECK)) {
+     Serial.println("Error: No SD Card Inserted");
+     error = TRUE;
+    }
+    
+   else {
+     Serial.println("Error: Failed to initialize SD Card");
+     error = TRUE;
+   }
+   
+   return sd;
+  }
+
+/*
  * Purpose: Write to SD file name and return whether or not write was successful
  * Output: true or false
  */
