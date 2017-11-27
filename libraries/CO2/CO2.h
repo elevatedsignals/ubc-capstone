@@ -9,9 +9,7 @@
  *          the CO2 concentration value.
  * Output: A float contraining CO2 concentration in ppm or a respective error
  */
-float get_concentration(int *error) {
-  float co2_conc = -1000; // default value used to detect null readings
-
+float get_co2_voltage(int *error) {
   int sensor_value;
 
   int attempt = 0; // track number of poll attempts
@@ -28,20 +26,19 @@ float get_concentration(int *error) {
   // analog signal is converted to a voltage value
   float voltage = sensor_value * (5000 / 1024.0);
 
-  if(voltage < 400) {
-    return co2_conc;
-  }
-  else {
-    int voltage_difference = voltage - 400;
-    co2_conc = voltage_difference * (50.0 / 16.0);
-  }
-
-  if (co2_conc != -1000) {
-    return co2_conc;
-  } else {
+  if (voltage < 400 || voltage > 2000){
     *error = TRUE;
-    return -1000;
+    return -1000; 
   }
+  return voltage;
+}
+
+float get_co2_concentration(float voltage){
+
+  int voltage_difference = voltage - 400;
+  float co2_conc = voltage_difference * (50.0 / 16.0);
+
+  return co2_conc;
 }
 
 #endif
