@@ -13,5 +13,6 @@
 #define DHTTYPE DHT22
 
 #define ERROR_CO2 "Error: CO2 Temperature sensor"
+#define NULL_CO2 -1000
 
 #endif
