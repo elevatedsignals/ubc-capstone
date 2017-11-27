@@ -8,7 +8,7 @@ void setup() {
   analogReference(DEFAULT);
   // set error variable to default
   error = FALSE;
-  float co2_conc = get_concentration(&error);
+  float co2_conc = get_co2_concentration(get_co2_voltage(&error));
   if (error) {
     Serial.print(ERROR_CO2);
   }
