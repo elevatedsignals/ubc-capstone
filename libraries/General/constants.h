@@ -14,7 +14,5 @@
 
 #define ERROR_GCO2V "get_co2_voltage error: output outside expected range (400 - 2000)\n"
 #define ERROR_GCO2C "get_co2_concentration error: input/output outside expected range (400 - 2000/0 - 5000)\n"
-#define ERROR_GCO2C_I "get_co2_concentration error: input outside expected range (400 - 2000)\n"
-#define ERROR_GCO2C_O "get_co2_concentration error: output outside expected range (0 - 5000)\n"
 
 #endif
