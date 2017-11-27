@@ -1,9 +1,15 @@
+#ifndef CO2_H
+#define CO2_H
+
+#if ARDUINO >= 100
+ #include "Arduino.h"
+#else
+ #include "WProgram.h"
+#endif
+
 #include "constants.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifndef CO2_H
-#define CO2_H
 
 #define TRUE 1
 #define FALSE 0
