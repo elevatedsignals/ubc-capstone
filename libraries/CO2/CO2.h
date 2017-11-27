@@ -1,25 +1,15 @@
 #ifndef CO2_H
 #define CO2_H
 
-struct CO2 {
-  volatile float concentration;
-  volatile int has_data; // whether it obtained data
-};
+#define TRUE 1
+#define FALSE 0
 
-/*
- * Purpose: Determines whether CO2 concentration value been obtained.
- * Output: true or false
- */
-int is_co2_ready(struct CO2 co2_h) {
-  return co2_h.has_data;
-}
-
-/*
- * Purpose: Gets the CO2 concentration value
- * Output: CO2 concentration in ppm
- */
-float get_concentration(struct CO2 co2_h) {
-  return co2_h.concentration;
+float get_concentration(float co2, int *error) {
+  if (co2 != -1000) {
+    return co2;
+  }
+  *error = TRUE;
+  return -1000;
 }
 
 #endif
