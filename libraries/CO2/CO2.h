@@ -30,6 +30,7 @@ float get_co2_voltage(int *error) {
     *error = TRUE;
     return -1000; 
   }
+  
   return voltage;
 }
 
@@ -37,6 +38,11 @@ float get_co2_concentration(float voltage){
 
   int voltage_difference = voltage - 400;
   float co2_conc = voltage_difference * (50.0 / 16.0);
+  
+  if (co2_conc < 0 || co2_conc > 5000){
+    *error = TRUE;
+    return -1000; 
+  }
 
   return co2_conc;
 }
