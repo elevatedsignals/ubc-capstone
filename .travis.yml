@@ -8,6 +8,8 @@ before_install:
   - sudo mv arduino-1.6.5 /usr/local/share/arduino
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
   - mv `find libraries/ -type f` controller
+install:
+  - arduino --install-library "SD"
 script:
   - arduino --verify --board arduino:avr:uno controller/controller.ino
   - arduino --verify --board arduino:avr:pro16MHzatmega168 controller/controller.ino
