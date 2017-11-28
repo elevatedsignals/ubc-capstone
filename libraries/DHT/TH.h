@@ -2,43 +2,39 @@
 #ifndef TH_H
 #define TH_H
 
+#define TRUE 1
+#define FALSE 0
+
+/* humidity and temp will be initialized to -1000 to
+  detect errors obtaining data as those are invalid values */
 struct TH {
   volatile float h; // humidity
   volatile float t; // temperature
-  volatile float hi; // heat index
-  volatile int has_data; // whether it obtained data
 };
-
-/*
- * Purpose: Determines whether temp and humidity data have been obtained.
- * Output: true or false
- */
-int is_ready(struct TH t_h) {
-  return t_h.has_data;
-}
 
 /*
  * Purpose: Gets the temperature data
  * Output: temperature in Celsius
  */
-float get_temp(struct TH t_h) {
-  return t_h.t;
+float get_temp(struct TH t_h, int *error) {
+  if (t_h.t != -1000) {
+    return t_h.t;
+  }
+  *error = TRUE;
+  return -1000;
 }
 
 /*
  * Purpose: Gets the humidity data
- * Output: humidity percentage
+ * Output: relative humidity percentage
  */
-float get_humidity(struct TH t_h) {
-  return t_h.h;
-}
-
-/*
- * Purpose: Calculates and gets the heat index
- * Output: heat index in Celsius
- */
-float get_heatindex(struct TH t_h) {
-  return t_h.hi;
+float get_humidity(struct TH t_h, int *error) {
+  // relative humidity must be 0+
+  if (t_h.h >= 0 & t_h.h <= 100) {
+    return t_h.h;
+  }
+  *error = TRUE;
+  return -1000;
 }
 
 #endif
