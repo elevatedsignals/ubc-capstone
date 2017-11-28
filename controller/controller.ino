@@ -1,7 +1,7 @@
-
 #include "constants.h"
 #include "DHT.h"
 #include "TH.h"
+#include "SDCard.h"
 
 /*
 * Purpose: initializes the DHT sensor and polls the sensor till it obtains
@@ -46,6 +46,8 @@ struct TH init_dht(void) {
 
 void setup() {
   Serial.begin(9600);
+  // set default reference voltage (5V)
+  analogReference(DEFAULT);
 
   int error;
 
@@ -69,6 +71,27 @@ void setup() {
   Serial.print("Temperature: ");
   Serial.print(t);
   Serial.print(" *C ");
+  
+  /* SD interfacing code */
+  error = FALSE;
+  struct SD_card sd = init_sd("data.txt", error); // TODO check error pointer 
+
+  // writes/reads to SD Card if initialized properly
+  if(!error) {
+    Serial.println("Begin writing to SD");
+    // TODO pass in sensor vals
+    /*
+    for(float i = 0; i < 10; ++i){
+      write_sd(sd, i, i, i, error);
+    }
+    
+    // reads from SD card
+    read_sd(sd, error);
+    */
+    SD.remove("data.txt"); // TODO create const filename
+    
+  } 
+  Serial.println("SD Finished");
 
 }
 
