@@ -14,5 +14,7 @@
 
 #define ERROR_TEMP "Error: DHT Temperature sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity sensor"
+#define ERROR_GCO2V "get_co2_voltage error: output outside expected range (400 - 2000)\n"
+#define ERROR_GCO2C "get_co2_concentration error: input/output outside expected range (400 - 2000/0 - 5000)\n"
 
 #endif

@@ -1,4 +1,5 @@
 #include "constants.h"
+#include "CO2.h"
 #include "DHT.h"
 #include "TH.h"
 #include "SDCard.h"
@@ -72,6 +73,23 @@ void setup() {
   Serial.print(t);
   Serial.print(" *C ");
   
+  /* CO2 code */
+  float co2_volt, co2_conc;
+  
+  error = FALSE; 
+  co2_volt = get_co2_voltage(&error);
+  if (error) {
+    Serial.print(ERROR_GCO2V);
+  }
+  error = FALSE;
+  co2_conc = get_co2_concentration(co2_volt, &error);
+  if (error) {
+    Serial.print(ERROR_GCO2C);
+  }
+  Serial.print("CO2 Concentration: ");
+  Serial.print(co2_conc);
+  Serial.print(" ppm");
+  
   /* SD interfacing code */
   error = FALSE;
   struct SD_card sd = init_sd("data.txt", error); // TODO check error pointer 
@@ -96,5 +114,4 @@ void setup() {
 }
 
 void loop() {
-
 }
