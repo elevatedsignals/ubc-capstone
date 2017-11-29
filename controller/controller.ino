@@ -66,11 +66,11 @@ void setup() {
     Serial.println(ERROR_HUMIDITY);
   }
 
-  Serial.println("Humidity: ");
-  Serial.print(h);
-  Serial.println("Temperature: ");
+  Serial.print("Temperature: ");
   Serial.print(t);
-  Serial.print(" *C");
+  Serial.println(" °C");
+  Serial.print("Humidity: ");
+  Serial.println(h);
 
   /* CO2 code */
   float co2_volt, co2_conc;
@@ -85,31 +85,22 @@ void setup() {
   if (error) {
     Serial.println(ERROR_GCO2C);
   }
-  Serial.println("CO2 Concentration: ");
+  Serial.print("CO2 Concentration: ");
   Serial.print(co2_conc);
-  Serial.print(" ppm");
+  Serial.println(" ppm");
 
   /* SD interfacing code */
   error = FALSE;
-  struct SD_card sd = init_sd("data.txt", error); // TODO check error pointer
+  struct SD_card sd = init_sd(TXT_FILE, &error); 
 
   // writes/reads to SD Card if initialized properly
   if(!error) {
     Serial.println("Begin writing to SD");
-    // TODO pass in sensor vals
-    /*
-    for(float i = 0; i < 10; ++i){
-      write_sd(sd, i, i, i, error);
-    }
-
-    // reads from SD card
-    read_sd(sd, error);
-    */
-    SD.remove("data.txt"); // TODO create const filename
-
+    write_sd(sd, t, h, co2_conc, &error);
   }
+  error = FALSE;
+  read_sd(sd, &error);
   Serial.println("SD Finished");
-
 }
 
 void loop() {
