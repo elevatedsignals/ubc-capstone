@@ -1,108 +1,112 @@
-#include "constants.h"
-#include "DHT.h"
-#include "TH.h"
-#include "SDCard.h"
-#include "CO2.h"
+/* Modern Device Wind Sensor Sketch for Rev C Wind Sensor
+ This sketch is only valid if the wind sensor if powered from 
+ a regulated 5 volt supply. An Arduino or Modern Device BBB, RBBB
+ powered from an external power supply should work fine. Powering from
+ USB will also work but will be slightly less accurate in our experience.
+ 
+When using an Arduino to power the sensor, an external power supply is better. Most Arduinos have a 
+ polyfuse which protects the USB line. This fuse has enough resistance to reduce the voltage
+ available to around 4.7 to 4.85 volts, depending on the current draw. 
+ 
+ The sketch uses the on-chip temperature sensing thermistor to compensate the sensor
+ for changes in ambient temperature. Because the thermistor is just configured as a
+ voltage divider, the voltage will change with supply voltage. This is why the 
+ sketch depends upon a regulated five volt supply.
+ 
+ Other calibrations could be developed for different sensor supply voltages, but would require
+ gathering data for those alternate voltages, or compensating the ratio.
+ 
+ Hardware Setup: 
+ Wind Sensor Signals    Arduino
+ GND                    GND
+ +V                     5V
+ RV                     A1    // modify the definitions below to use other pins
+ TMP                    A0    // modify the definitions below to use other pins
+ 
+ Paul Badger 2014
+ 
+ Hardware setup:
+ Wind Sensor is powered from a regulated five volt source.
+ RV pin and TMP pin are connected to analog innputs.
+ 
+ */
 
-/*
-* Purpose: initializes the DHT sensor and polls the sensor till it obtains
-* temperature and humidity data. This needs to be in a .ino file
-* (not c file) as DHT library code is in c++.
-* Output: the TH struct containing all DHT sensor data
-*/
-struct TH init_dht(void) {
 
-  /* to determine whether a temp and humidity reading was obtained, we
-   initialize them to -1000 since those are invalid values */
-  struct TH t_h = {-1000, -1000};
-  float h;
-  float t;
+#define analogPinForRV    1   // change to pins you the analog pins are using
+#define analogPinForTMP   0
 
-  // initialize DHT sensor
-  DHT dht(PIN_DHT, DHTTYPE);
-  dht.begin();
+// to calibrate your sensor, put a glass over it, but the sensor should not be
+// touching the desktop surface however.
+// adjust the zeroWindAdjustment until your sensor reads about zero with the glass over it. 
 
-  int attempt = 0; // track number of poll attempts
+const float zeroWindAdjustment =  .2; // negative numbers yield smaller wind speeds and vice versa.
 
-  // try to poll data for 20 secs max
-  do {
-    // can only poll every 2 seconds
-    delay(2000);
-    // reading temperature or humidity takes about 250 ms
-    h = dht.readHumidity();
-    // read temperature as Celsius (default)
-    t = dht.readTemperature();
-    attempt++;
-  } while((isnan(h) || isnan(t)) & attempt < 10);
-
-  if (!isnan(t)) {
-    t_h.t = t;
-  }
-  if (!isnan(h)) {
-    t_h.h = h;
-  }
-
-  return t_h;
-}
+int TMP_Therm_ADunits;  //temp termistor value from wind sensor
+float RV_Wind_ADunits;    //RV output from wind sensor 
+float RV_Wind_Volts;
+unsigned long lastMillis;
+int TempCtimes100;
+float zeroWind_ADunits;
+float zeroWind_volts;
+float WindSpeed_MPH;
 
 void setup() {
-  Serial.begin(9600);
-  // set default reference voltage (5V)
-  analogReference(DEFAULT);
 
-  int error;
+  Serial.begin(9600);   // faster printing to get a bit better throughput on extended info
+  // remember to change your serial monitor
 
-  /* DHT temperature and humidity code */
-  struct TH t_h = init_dht();
+  Serial.println("start");
+  // put your setup code here, to run once:
 
-  error = FALSE;
-  float t = get_temp(t_h, &error);
-  if (error) {
-    Serial.println(ERROR_TEMP);
-  }
-  error = FALSE;
-  float h = get_humidity(t_h, &error);
-  if (error) {
-    Serial.println(ERROR_HUMIDITY);
-  }
+  //   Uncomment the three lines below to reset the analog pins A2 & A3
+  //   This is code from the Modern Device temp sensor (not required)
+  pinMode(A2, INPUT);        // GND pin      
+  pinMode(A3, INPUT);        // VCC pin
+  digitalWrite(A3, LOW);     // turn off pullups
 
-  Serial.print("Temperature: ");
-  Serial.print(t);
-  Serial.println(" °C");
-  Serial.print("Humidity: ");
-  Serial.println(h);
-
-  /* CO2 code */
-  float co2_volt, co2_conc;
-
-  error = FALSE;
-  co2_volt = get_co2_voltage(&error);
-  if (error) {
-    Serial.println(ERROR_GCO2V);
-  }
-  error = FALSE;
-  co2_conc = get_co2_concentration(co2_volt, &error);
-  if (error) {
-    Serial.println(ERROR_GCO2C);
-  }
-  Serial.print("CO2 Concentration: ");
-  Serial.print(co2_conc);
-  Serial.println(" ppm");
-
-  /* SD interfacing code */
-  error = FALSE;
-  struct SD_card sd = init_sd(TXT_FILE, &error); 
-
-  // writes/reads to SD Card if initialized properly
-  if(!error) {
-    Serial.println("Begin writing to SD");
-    write_sd(sd, t, h, co2_conc, &error);
-  }
-  error = FALSE;
-  read_sd(sd, &error);
-  Serial.println("SD Finished");
 }
 
 void loop() {
+
+
+  if (millis() - lastMillis > 1000){      // read every 200 ms - printing slows this down further
+    
+    TMP_Therm_ADunits = analogRead(analogPinForTMP);
+    RV_Wind_ADunits = analogRead(analogPinForRV);
+    RV_Wind_Volts = (RV_Wind_ADunits *  0.0048828125);
+
+    // these are all derived from regressions from raw data as such they depend on a lot of experimental factors
+    // such as accuracy of temp sensors, and voltage at the actual wind sensor, (wire losses) which were unaccouted for.
+    TempCtimes100 = (0.005 *((float)TMP_Therm_ADunits * (float)TMP_Therm_ADunits)) - (16.862 * (float)TMP_Therm_ADunits) + 9075.4;  
+
+    zeroWind_ADunits = -0.0006*((float)TMP_Therm_ADunits * (float)TMP_Therm_ADunits) + 1.0727 * (float)TMP_Therm_ADunits + 47.172;  //  13.0C  553  482.39
+
+    zeroWind_volts = (zeroWind_ADunits * 0.0048828125) - zeroWindAdjustment;  
+
+    // This from a regression from data in the form of 
+    // Vraw = V0 + b * WindSpeed ^ c
+    // V0 is zero wind at a particular temperature
+    // The constants b and c were determined by some Excel wrangling with the solver.
+    
+   WindSpeed_MPH =  pow(((RV_Wind_Volts - zeroWind_volts) /.2300) , 2.7265);   
+
+   /*
+    Serial.print("  TMP volts ");
+    Serial.print(TMP_Therm_ADunits * 0.0048828125);
+    
+    Serial.print(" RV volts ");
+    Serial.print((float)RV_Wind_Volts);
+
+    Serial.print("\t  TempC*100 ");
+    Serial.print(TempCtimes100 );
+
+    Serial.print("   ZeroWind volts ");
+    Serial.print(zeroWind_volts);
+    */
+
+    Serial.print("   WindSpeed MPH ");
+    Serial.println((float)WindSpeed_MPH);
+    lastMillis = millis();    
+  } 
 
 }
