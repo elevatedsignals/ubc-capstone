@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TRUE 1
-#define FALSE 0
-
 /*
  * Purpose: Polls the Infrared CO2 Sensor till it obtains a sensor value and calculates
  *          the CO2 concentration value.
@@ -35,13 +32,13 @@ float get_co2_voltage(int *error) {
 
   // analog signal is converted to a voltage value
   float voltage = sensor_value * (5000 / 1024.0);
-  
+
   // check for invalid output
   if (voltage < 400 || voltage > 2000){
     *error = TRUE;
-    return voltage; 
+    return voltage;
   }
-  
+
   return voltage;
 }
 
@@ -49,16 +46,16 @@ float get_co2_concentration(float voltage, int *error){
   // check for invalid input
   if (voltage < 400 || voltage > 2000){
     *error = TRUE;
-    return voltage; 
+    return voltage;
   }
-  
+
   int voltage_difference = voltage - 400;
   float co2_conc = voltage_difference * (50.0 / 16.0);
-  
+
   //check for invalid output
   if (co2_conc < 0 || co2_conc > 5000){
     *error = TRUE;
-    return co2_conc; 
+    return co2_conc;
   }
 
   return co2_conc;
