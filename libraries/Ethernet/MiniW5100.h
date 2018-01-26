@@ -13,7 +13,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
-const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; //@TODO: replace with actual MAC on Mini W5100
+const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 const char server[] = "www.arduino.cc"; // name address for Arduino (using DNS)
 const IPAddress ip(192, 168, 1, 177); // static IP address to use if the DHCP fails to assign
 
@@ -142,10 +142,7 @@ void validate_ip() {
     case 4: {
       Serial.println("IP rebinding successful");
       break;
-    // }
-    // case default: {
-    //   Serial.println("Unexpected status value in validate_ip.");
-    // }
+    }
   }
 }
 

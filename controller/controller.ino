@@ -16,40 +16,40 @@ unsigned long last_connection_time = 0; // last time connected to server (millis
 * (not c file) as DHT library code is in c++.
 * Output: the TH struct containing all DHT sensor data
 */
-// struct TH init_dht(void) {
-//
-//   /* to determine whether a temp and humidity reading was obtained, we
-//    initialize them to -1000 since those are invalid values */
-//   struct TH t_h = {-1000, -1000};
-//   float h;
-//   float t;
-//
-//   // initialize DHT sensor
-//   DHT dht(PIN_DHT, DHTTYPE);
-//   dht.begin();
-//
-//   int attempt = 0; // track number of poll attempts
-//
-//   // try to poll data for 20 secs max
-//   do {
-//     // can only poll every 2 seconds
-//     delay(2000);
-//     // reading temperature or humidity takes about 250 ms
-//     h = dht.readHumidity();
-//     // read temperature as Celsius (default)
-//     t = dht.readTemperature();
-//     attempt++;
-//   } while((isnan(h) || isnan(t)) & attempt < 10);
-//
-//   if (!isnan(t)) {
-//     t_h.t = t;
-//   }
-//   if (!isnan(h)) {
-//     t_h.h = h;
-//   }
-//
-//   return t_h;
-// }
+struct TH init_dht(void) {
+
+  /* to determine whether a temp and humidity reading was obtained, we
+   initialize them to -1000 since those are invalid values */
+  struct TH t_h = {-1000, -1000};
+  float h;
+  float t;
+
+  // initialize DHT sensor
+  DHT dht(PIN_DHT, DHTTYPE);
+  dht.begin();
+
+  int attempt = 0; // track number of poll attempts
+
+  // try to poll data for 20 secs max
+  do {
+    // can only poll every 2 seconds
+    delay(2000);
+    // reading temperature or humidity takes about 250 ms
+    h = dht.readHumidity();
+    // read temperature as Celsius (default)
+    t = dht.readTemperature();
+    attempt++;
+  } while((isnan(h) || isnan(t)) & attempt < 10);
+
+  if (!isnan(t)) {
+    t_h.t = t;
+  }
+  if (!isnan(h)) {
+    t_h.h = h;
+  }
+
+  return t_h;
+}
 
 void setup() {
   Serial.begin(9600);
