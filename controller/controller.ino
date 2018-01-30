@@ -5,8 +5,6 @@
 #include "CO2.h"
 #include "MiniW5100.h"
 
-const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
-
 EthernetClient client; // struct for functions that manipulate communication with server
 unsigned long last_connection_time = 0; // last time connected to server (milliseconds)
 

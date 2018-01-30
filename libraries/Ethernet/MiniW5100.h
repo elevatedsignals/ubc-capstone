@@ -13,6 +13,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
+const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 const char server[] = "www.arduino.cc"; // name address for Arduino (using DNS)
 const IPAddress ip(192, 168, 1, 177); // static IP address to use if the DHCP fails to assign
