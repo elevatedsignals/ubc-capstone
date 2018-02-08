@@ -34,6 +34,7 @@ When using an Arduino to power the sensor, an external power supply is better. M
 
 #define analogPinForRV    1   // change to pins you the analog pins are using
 #define analogPinForTMP   0
+#define wind_Threshold  4
 
 // to calibrate your sensor, put a glass over it, but the sensor should not be
 // touching the desktop surface however.
@@ -68,8 +69,7 @@ void setup() {
 
 void loop() {
 
-
-  if (millis() - lastMillis > 1000){      // read every 200 ms - printing slows this down further
+  if (millis() - lastMillis > 500){      // read every 500 ms - printing slows this down further
     
     TMP_Therm_ADunits = analogRead(analogPinForTMP);
     RV_Wind_ADunits = analogRead(analogPinForRV);
@@ -88,24 +88,19 @@ void loop() {
     // V0 is zero wind at a particular temperature
     // The constants b and c were determined by some Excel wrangling with the solver.
     
-   WindSpeed_MPH =  pow(((RV_Wind_Volts - zeroWind_volts) /.2300) , 2.7265);   
-
-   /*
-    Serial.print("  TMP volts ");
-    Serial.print(TMP_Therm_ADunits * 0.0048828125);
-    
-    Serial.print(" RV volts ");
-    Serial.print((float)RV_Wind_Volts);
-
-    Serial.print("\t  TempC*100 ");
-    Serial.print(TempCtimes100 );
-
-    Serial.print("   ZeroWind volts ");
-    Serial.print(zeroWind_volts);
-    */
-
+   WindSpeed_MPH =  pow(((RV_Wind_Volts - zeroWind_volts) /.2300) , 2.7265);  
+   
+    //Comment during demo------
     Serial.print("   WindSpeed MPH ");
-    Serial.println((float)WindSpeed_MPH);
+    Serial.print((float)WindSpeed_MPH);
+    Serial.print("   ");
+    //-------------------------
+    
+    Serial.print("Air flow:");
+    if ((float)WindSpeed_MPH > wind_Threshold)
+      Serial.println("Yes");
+    else
+      Serial.println("No");
     lastMillis = millis();    
   } 
 
