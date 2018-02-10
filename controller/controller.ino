@@ -54,19 +54,20 @@ void setup() {
   // // set default reference voltage (5V)
   // analogReference(DEFAULT);
   //
-  int error;
+  int error = 0;
 
   // SETUP
   client = init_ethernet(client, &error);
 
   // LOOP
-
   print_ip();
 
   client = check_recv_buffer(client, &error);
 
+  client = make_http_request(client, &error);
+
   if(error) {
-    Serial.println(ERROR_RECV_BUFFER);
+    Serial.println(ERROR_HTTP_REQUEST);
   } else {
     client = check_connection(client, &error);
 
@@ -74,17 +75,9 @@ void setup() {
       Serial.println(ERROR_CONNECTION);
     } else {
       validate_ip();
-
-      // send a HTTP request only if set interval has elapsed (milliseconds)
-      if(millis() - last_connection_time > interval) {
-        client = make_http_request(client, &error);
-
-        if(error) {
-          Serial.println(ERROR_HTTP_REQUEST);
-        }
-      }
     }
   }
+
 
   //
   // /* DHT temperature and humidity code */

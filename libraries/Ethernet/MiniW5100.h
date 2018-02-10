@@ -15,8 +15,8 @@
 
 const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-const char server[] = "www.arduino.cc"; // name address for Arduino (using DNS)
-const IPAddress ip(192, 168, 1, 177); // static IP address to use if the DHCP fails to assign
+const char server[] = "www.google.com"; // name address for Arduino (using DNS)
+const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fails to assign
 
 /*
 * Purpose: Initializes the ethernet connection to the server for logging sensor data
@@ -32,10 +32,10 @@ EthernetClient init_ethernet(EthernetClient client, int *error) {
 
     Ethernet.begin(mac, ip); // try to set IP address manually
   }
+  client.setTimeout(500);
+  delay(INIT_ETHERNET_DELAY); // delay for Mini W5100 to start
 
-   delay(INIT_ETHERNET_DELAY); // delay for Mini W5100 to start
-
-   return client;
+  return client;
  }
 
  /*
@@ -75,12 +75,11 @@ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
   int num_bytes_avail = client.available();
 
   // NOT SURE IF NECESSARY
-  if(num_bytes_avail == 0) {
-    *error = TRUE;
-    Serial.println("Error: No char/s received from server.");
-    return client;
-  }
-
+  // if(num_bytes_avail == 0) {
+  //   *error = TRUE;
+  //   Serial.println("Error: No char/s received from server.");
+  //   return client;
+  // }
 
   while(num_bytes_avail >= 1) {
     char c = client.read();
@@ -94,10 +93,10 @@ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
   }
 
   // ALTERNATIVE CODE IF ONLY SINGLE CHARS ARE EXPECTED
-  // if (client.available()) {
-  //   char c = client.read();
-  //   Serial.write(c);
-  // }
+  if (client.available()) {
+    char c = client.read();
+    Serial.write(c);
+  }
 
   return client;
 }
@@ -108,7 +107,7 @@ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
 EthernetClient check_connection(EthernetClient client, int *error) {
   if (!client.connected()) {
     Serial.println("Error: Disconnected from server. Closing connection.");
-    int *error = TRUE;
+    *error = TRUE;
     client.stop();
   } else {
     Serial.println("Connection to server maintained.");
