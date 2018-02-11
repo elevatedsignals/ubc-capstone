@@ -2,7 +2,6 @@
 #include "MiniW5100.h"
 
 EthernetClient client; // struct for functions that manipulate communication with server
-unsigned long last_connection_time = 0; // last time connected to server (milliseconds)
 
 void setup() {
   Serial.begin(9600);
