@@ -7,7 +7,8 @@
  #include "WProgram.h"
 #endif
 
-#include "constants.h"
+#include "constants_bs.h"
+#include "TH.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <SPI.h>
@@ -15,13 +16,13 @@
 
 const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-const char server[] = "www.google.com"; // name address for Arduino (using DNS)
+const char server[] = "www.google.com"; // REPLACE WITH SERVER URL
 const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fails to assign
 
 /*
-* Purpose: Initializes the ethernet connection to the server for logging sensor data
+*  Purpose: Initializes the ethernet connection to the server for logging sensor data
 */
-EthernetClient init_ethernet(EthernetClient client, int *error) {
+EthernetClient init_ethernet(EthernetClient client) {
   // while (!Serial) {
   //   ; // wait for serial port to connect. Needed for native USB port only
   // }
@@ -29,28 +30,99 @@ EthernetClient init_ethernet(EthernetClient client, int *error) {
   // start the ethernet connection
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Error: Failed to obtain an IP address using DHCP. Attempting to set IP address manually.");
-
     Ethernet.begin(mac, ip); // try to set IP address manually
   }
+
   client.setTimeout(500);
   delay(INIT_ETHERNET_DELAY); // delay for Mini W5100 to start
 
   return client;
- }
+}
 
  /*
- * Purpose: Connects to the server and makes a HTTP request to send sensor data
+ *  Purpose: Prints any char/s received from the server for debugging purposes
+ *          over serial
  */
-EthernetClient make_http_request(EthernetClient client, int *error) {
+ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
+   int num_bytes_avail = client.available();
+
+   // ERROR CHECK IF CHARS ARE EXPECTED
+   // if(num_bytes_avail == 0) {
+   //   *error = TRUE;
+   //   Serial.println("Error: No char/s received from server.");
+   //   return client;
+   // }
+
+   while(num_bytes_avail >= 1) {
+     char c = client.read();
+
+     if(c == -1) {
+       break; //stop reading if no chars are left
+     }
+
+     Serial.write(c);
+     num_bytes_avail--;
+   }
+
+   // IF ONLY SINGLE CHARS MAY BE RECEIVED
+   if (client.available()) {
+     char c = client.read();
+     Serial.write(c);
+   }
+
+   return client;
+}
+
+/*
+*  Purpose: Formats sensor data for upload
+*/
+String prepare_payload(struct TH t_h, float co2_conc, bool airflow, int *error) {
+  String payload = "{\"API Key\": ABC123,";
+  payload += "\"Sensor Data\":";
+
+  int x = get_temp(t_h, error);
+  payload += "{\"Temperature (C)\":"+x;
+  payload += ",";
+
+  x = get_humidity(t_h, error);
+  payload += "\"Humidity\":"+x;
+  payload += ",";
+
+  if(airflow) {
+    payload += "\"Airflow\":\"Yes\",";
+  } else {
+    payload += "\"Airflow\":\"No\",";
+  }
+
+  // payload += "\"PAR (PPFD)\": 2000";
+
+  payload += "}";
+  payload += "}";
+
+  return payload;
+}
+
+ /*
+ *  Purpose: Connects to the server and makes a HTTP request to send sensor data
+ */
+EthernetClient make_http_request(EthernetClient client, String payload, int *error) {
   client.stop(); // close any previous connections to free socket
 
-  if (client.connect(server, DEFAULT_HTTP_PORT)) {
+  if (client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
 
-    // Make HTTP request
-    client.println("GET /search?q=arduino HTTP/1.1"); //REPLACE TEST VALUE
-    client.println("Host: www.google.com"); //REPLACE TEST VALUE
-    client.println("Connection: close"); //REPLACE TEST VALUE
-    client.println(); //REPLACE TEST VALUE
+    // Test an HTTP GET request
+    client.println("GET /search?q=arduino HTTP/1.1"); // REPLACE TEST VALUE
+    client.println("Host: www.google.com"); // REPLACE TEST VALUE
+    client.println("Connection: close"); // REPLACE TEST VALUE
+    client.println(); // REPLACE TEST VALUE
+
+    client.println("POST /PATH_HERE HTTP/1.0");
+    client.println("Host: HOST_URL_HERE");
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(payload.length());
+    client.println();
+    client.println(payload);
   } else {
     Serial.println("Error: Failed to establish connection with server.");
     *error = TRUE;
@@ -60,7 +132,7 @@ EthernetClient make_http_request(EthernetClient client, int *error) {
 }
 
 /*
-* Purpose: Prints the ethernet module's IP address over serial
+*  Purpose: Prints the ethernet module's IP address over serial
 */
 void print_ip() {
   Serial.print("The Ethernet Module has the following IP address: ");
@@ -68,41 +140,7 @@ void print_ip() {
 }
 
 /*
-* Purpose: Prints any char/s received from the server for debugging purposes
-*          over serial
-*/
-EthernetClient check_recv_buffer(EthernetClient client, int *error) {
-  int num_bytes_avail = client.available();
-
-  // NOT SURE IF NECESSARY
-  // if(num_bytes_avail == 0) {
-  //   *error = TRUE;
-  //   Serial.println("Error: No char/s received from server.");
-  //   return client;
-  // }
-
-  while(num_bytes_avail >= 1) {
-    char c = client.read();
-
-    if(c == -1) {
-      break; //stop reading if no chars are left
-    }
-
-    Serial.write(c);
-    num_bytes_avail--;
-  }
-
-  // ALTERNATIVE CODE IF ONLY SINGLE CHARS ARE EXPECTED
-  if (client.available()) {
-    char c = client.read();
-    Serial.write(c);
-  }
-
-  return client;
-}
-
-/*
-* Purpose: Stops running client if disconnected from server
+*  Purpose: Stops running client if disconnected from server
 */
 EthernetClient check_connection(EthernetClient client, int *error) {
   if (!client.connected()) {
@@ -117,7 +155,7 @@ EthernetClient check_connection(EthernetClient client, int *error) {
 }
 
 /*
-* Purpose: Renews DHCP lease if needed
+*  Purpose: Renews DHCP lease if needed
 */
 void validate_ip() {
   int status = Ethernet.maintain();

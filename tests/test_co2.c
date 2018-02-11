@@ -11,14 +11,15 @@
 int error;
 
 /*
- * Unit tests for the Gravity IR CO2 Sensor
+ *  Unit tests for the Gravity IR CO2 Sensor
  */
 int main(void) {
   float co2_volt, co2_conc;
-  
+
   /*  CO2 Test 1
    *  Purpose: Checks for standard output of get_co2_voltage.
-   */ Expected: !error
+   *  Expected: !error
+   */
   error = FALSE;
   co2_volt = get_co2_voltage(&error);
   if (!error && (co2_volt > 399) && (co2_volt < 2401))
@@ -31,7 +32,8 @@ int main(void) {
   /*  CO2 Test 2
    *  Purpose: Checks for error handling in input of get_co2_concentration.
    *  Input: below-bounds co2_voltage
-   */ Expected: error
+   *  Expected: error
+   */
   error = FALSE;
   co2_volt = (float) 399;
   co2_conc = get_co2_voltage(co2_volt, &error);
@@ -45,7 +47,8 @@ int main(void) {
   /*  CO2 Test 3
    *  Purpose: Checks for error handling in input of get_co2_concentration.
    *  Input: above-bounds co2_voltage
-   */ Expected: error
+   *  Expected: error
+   */
   error = FALSE;
   co2_volt = (float) 2401;
   co2_conc = get_co2_voltage(co2_volt, &error);
@@ -59,7 +62,8 @@ int main(void) {
   /*  CO2 Test 4
    *  Purpose: Checks for expected lower-bound output of get_co2_concentration.
    *  Input: lower-bounds co2_voltage
-   */ Expected: !error, co2_conc = 0
+   *  Expected: !error, co2_conc = 0
+   */
   error = FALSE;
   co2_volt = (float) 400;
   co2_conc = get_co2_voltage(co2_volt, &error);
@@ -69,11 +73,12 @@ int main(void) {
   else {
     printf("CO2 Test 4 Failed. Threw error when given co2_voltage value (400) was within expected range (400 - 2000).\n");
   }
-  
+
   /*  CO2 Test 5
    *  Purpose: Checks for expected upper-bound output of get_co2_concentration.
    *  Input: valid co2_voltage
-   */ Expected: !error, co2_conc = 5000
+   *  Expected: !error, co2_conc = 5000
+   */
   error = FALSE;
   co2_volt = (float) 2000;
   co2_conc = get_co2_voltage(co2_volt, &error);
@@ -87,7 +92,8 @@ int main(void) {
   /*  CO2 Test 6
    *  Purpose: Checks for error handling in above-bounds output of get_co2_concentration.
    *  Input: valid co2_voltage
-   */ Expected: error
+   *  Expected: error
+   */
   error = FALSE;
   co2_volt = (float) 2001;
   co2_conc = get_co2_voltage(co2_volt, &error);
@@ -101,7 +107,8 @@ int main(void) {
   /*  CO2 Test 7
    *  Purpose: Checks for error handling in above-bounds output of get_co2_concentration.
    *  Input: upper-bound co2_voltage
-   */ Expected: error
+   *  Expected: error
+   */
   error = FALSE;
   co2_volt = (float) 2400;
   co2_conc = get_co2_voltage(co2_volt, &error);

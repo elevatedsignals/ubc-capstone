@@ -3,10 +3,6 @@
 #include "TH.h"
 #include "SDCard.h"
 #include "CO2.h"
-#include "MiniW5100.h"
-
-EthernetClient client; // struct for functions that manipulate communication with server
-unsigned long last_connection_time = 0; // last time connected to server (milliseconds)
 
 /*
 * Purpose: initializes the DHT sensor and polls the sensor till it obtains
@@ -51,84 +47,61 @@ struct TH init_dht(void) {
 
 void setup() {
   Serial.begin(9600);
-  // // set default reference voltage (5V)
-  // analogReference(DEFAULT);
-  //
-  int error = 0;
 
-  // SETUP
-  client = init_ethernet(client, &error);
+  // set default reference voltage (5V)
+  analogReference(DEFAULT);
+  
+  int error = FALSE;
 
-  // LOOP
-  print_ip();
+  /* DHT temperature and humidity code */
+  struct TH t_h = init_dht();
 
-  client = check_recv_buffer(client, &error);
-
-  client = make_http_request(client, &error);
-
-  if(error) {
-    Serial.println(ERROR_HTTP_REQUEST);
-  } else {
-    client = check_connection(client, &error);
-
-    if(error) {
-      Serial.println(ERROR_CONNECTION);
-    } else {
-      validate_ip();
-    }
+  error = FALSE;
+  float t = get_temp(t_h, &error);
+  if (error) {
+    Serial.println(ERROR_TEMP);
+  }
+  error = FALSE;
+  float h = get_humidity(t_h, &error);
+  if (error) {
+    Serial.println(ERROR_HUMIDITY);
   }
 
+  Serial.print("Temperature: ");
+  Serial.print(t);
+  Serial.println(" °C");
+  Serial.print("Humidity: ");
+  Serial.println(h);
 
-  //
-  // /* DHT temperature and humidity code */
-  // struct TH t_h = init_dht();
-  //
-  // error = FALSE;
-  // float t = get_temp(t_h, &error);
-  // if (error) {
-  //   Serial.println(ERROR_TEMP);
-  // }
-  // error = FALSE;
-  // float h = get_humidity(t_h, &error);
-  // if (error) {
-  //   Serial.println(ERROR_HUMIDITY);
-  // }
-  //
-  // Serial.print("Temperature: ");
-  // Serial.print(t);
-  // Serial.println(" °C");
-  // Serial.print("Humidity: ");
-  // Serial.println(h);
-  //
-  // /* CO2 code */
-  // float co2_volt, co2_conc;
-  //
-  // error = FALSE;
-  // co2_volt = get_co2_voltage(&error);
-  // if (error) {
-  //   Serial.println(ERROR_GCO2V);
-  // }
-  // error = FALSE;
-  // co2_conc = get_co2_concentration(co2_volt, &error);
-  // if (error) {
-  //   Serial.println(ERROR_GCO2C);
-  // }
-  // Serial.print("CO2 Concentration: ");
-  // Serial.print(co2_conc);
-  // Serial.println(" ppm");
-  //
-  // /* SD interfacing code */
-  // error = FALSE;
-  // struct SD_card sd = init_sd(TXT_FILE, &error);
-  //
-  // // writes/reads to SD Card if initialized properly
-  // if(!error) {
-  //   Serial.println("Begin writing to SD");
-  //   write_sd(sd, t, h, co2_conc, &error);
-  // }
-  // error = FALSE;
-  // read_sd(sd, &error);
-  // Serial.println("SD Finished");
+  /* CO2 code */
+  float co2_volt, co2_conc;
+
+  error = FALSE;
+  co2_volt = get_co2_voltage(&error);
+  if (error) {
+    Serial.println(ERROR_GCO2V);
+  }
+  error = FALSE;
+  co2_conc = get_co2_concentration(co2_volt, &error);
+  if (error) {
+    Serial.println(ERROR_GCO2C);
+  }
+  Serial.print("CO2 Concentration: ");
+  Serial.print(co2_conc);
+  Serial.println(" ppm");
+
+  /* SD interfacing code */
+  error = FALSE;
+  struct SD_card sd = init_sd(TXT_FILE, &error);
+
+  // writes/reads to SD Card if initialized properly
+  if(!error) {
+    Serial.println("Begin writing to SD");
+    write_sd(sd, t, h, co2_conc, &error);
+  }
+  error = FALSE;
+  read_sd(sd, &error);
+  Serial.println("SD Finished");
 }
 
 void loop() {
