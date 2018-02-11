@@ -116,13 +116,13 @@ EthernetClient make_http_request(EthernetClient client, String payload, int *err
     client.println("Connection: close"); // REPLACE TEST VALUE
     client.println(); // REPLACE TEST VALUE
 
-    client.println("POST /PATH_HERE HTTP/1.0");
-    client.println("Host: HOST_URL_HERE");
-    client.println("Content-Type: application/x-www-form-urlencoded");
-    client.print("Content-Length: ");
-    client.println(payload.length());
-    client.println();
-    client.println(payload);
+    // client.println("POST /PATH_HERE HTTP/1.0");
+    // client.println("Host: HOST_URL_HERE");
+    // client.println("Content-Type: application/x-www-form-urlencoded");
+    // client.print("Content-Length: ");
+    // client.println(payload.length());
+    // client.println();
+    // client.println(payload);
   } else {
     Serial.println("Error: Failed to establish connection with server.");
     *error = TRUE;
