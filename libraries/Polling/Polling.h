@@ -1,7 +1,7 @@
 #ifndef POLLING_H
 #define POLLING_H
 
-#include <constants.h>
+#include "constants.h"
 
 void wakeUpCommunication()       // here the interrupt is handled after wakeup
 {
