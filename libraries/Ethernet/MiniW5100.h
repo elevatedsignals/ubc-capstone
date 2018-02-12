@@ -8,7 +8,6 @@
 #endif
 
 #include "constants_bs.h"
-#include "TH.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <SPI.h>
@@ -29,7 +28,7 @@ EthernetClient init_ethernet(EthernetClient client) {
 
   // start the ethernet connection
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Error: Failed to obtain an IP address using DHCP. Attempting to set IP address manually.");
+    Serial.println("Failed to obtain an IP address using DHCP. Attempting to set IP address manually.");
     Ethernet.begin(mac, ip); // try to set IP address manually
   }
 
@@ -76,30 +75,61 @@ EthernetClient init_ethernet(EthernetClient client) {
 /*
 *  Purpose: Formats sensor data for upload
 */
-String prepare_payload(struct TH t_h, float co2_conc, bool airflow, int *error) {
-  String payload = "{\"API Key\": ABC123,";
-  payload += "\"Sensor Data\":";
+char* prepare_payload(String* payload, int data_type, float val) {
 
-  int x = get_temp(t_h, error);
-  payload += "{\"Temperature (C)\":"+x;
-  payload += ",";
-
-  x = get_humidity(t_h, error);
-  payload += "\"Humidity\":"+x;
-  payload += ",";
-
-  if(airflow) {
-    payload += "\"Airflow\":\"Yes\",";
-  } else {
-    payload += "\"Airflow\":\"No\",";
+  switch(data_type) {
+    case 0: {
+      *payload = "{\"API Key\":";
+      // *payload += API_KEY_TEMP;
+      *payload += "01"; // REPLACE TEST VALUE
+      *payload += ",\"json_value\":{";
+      *payload += "\"Temperature (C)\":"+(String)val;
+      break;
+    }
+    case 1: {
+      *payload = "{\"API Key\":";
+      // *payload += API_KEY_TEMP;
+      *payload += "02"; // REPLACE TEST VALUE
+      *payload += ",\"json_value\":{";
+      *payload += "\"Humidity (%)\":"+(String)val;
+      break;
+    }
+    case 2: {
+      *payload = "{\"API Key\":";
+      // *payload += API_KEY_TEMP;
+      *payload += "03"; // REPLACE TEST VALUE
+      *payload += ",\"json_value\":{";
+      *payload += "\"CO2 Concentration (ppm)\":"+(String)val;
+      break;
+    }
+    case 3: {
+      if(val == 1.0) {
+        *payload = "{\"API Key\":";
+        // *payload += API_KEY_TEMP;
+        *payload += "04"; // REPLACE TEST VALUE
+        *payload += ",\"json_value\":{";
+        *payload += "\"Airflow\":\"Yes\"";
+      } else {
+        *payload = "{\"API Key\":";
+        // *payload += API_KEY_TEMP;
+        *payload += "04"; // REPLACE TEST VALUE
+        *payload += ",\"json_value\":{";
+        *payload += "\"Airflow\":\"No\"";
+      }
+      break;
+    }
+    // case 4: {
+    //   *payload = "{\"API Key\":";
+    //   // *payload += API_KEY_TEMP;
+    //   *payload += "05"; // REPLACE TEST VALUE
+    //   *payload += ",\"json_value\":{";
+    //   *payload += "\"PAR (PPFD)\": 2000";
+    // }
   }
 
-  // payload += "\"PAR (PPFD)\": 2000";
+  *payload += "}}";
 
-  payload += "}";
-  payload += "}";
-
-  return payload;
+  return (char *)payload;
 }
 
  /*
@@ -108,20 +138,25 @@ String prepare_payload(struct TH t_h, float co2_conc, bool airflow, int *error) 
 EthernetClient make_http_request(EthernetClient client, String payload, int *error) {
   client.stop(); // close any previous connections to free socket
 
+  Serial.println("Connecting to google.com on Port 80 (Default).");
   if (client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
 
     // Test an HTTP GET request
+    Serial.println("Sending 1st line: \"GET /search?q=arduino HTTP/1.1\"");
     client.println("GET /search?q=arduino HTTP/1.1"); // REPLACE TEST VALUE
+    Serial.println("Sending 2nd line: \"Host: www.google.com\"");
     client.println("Host: www.google.com"); // REPLACE TEST VALUE
+    Serial.println("Sending 3rd line: \"Connection: close\"");
     client.println("Connection: close"); // REPLACE TEST VALUE
+    Serial.println("Sending 4th line: \"\"");
     client.println(); // REPLACE TEST VALUE
 
-    // client.println("POST /PATH_HERE HTTP/1.0");
-    // client.println("Host: HOST_URL_HERE");
-    // client.println("Content-Type: application/x-www-form-urlencoded");
-    // client.print("Content-Length: ");
+    // client.println(HTTP_GET_REQUEST_L1);
+    // client.println(HTTP_GET_REQUEST_L2);
+    // client.println(HTTP_GET_REQUEST_L3);
+    // client.print(HTTP_GET_REQUEST_L4);
     // client.println(payload.length());
-    // client.println();
+    // client.println(HTTP_GET_REQUEST_L5);
     // client.println(payload);
   } else {
     Serial.println("Error: Failed to establish connection with server.");
