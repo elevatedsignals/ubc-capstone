@@ -1,108 +1,145 @@
-#include "constants.h"
-#include "DHT.h"
-#include "TH.h"
-#include "SDCard.h"
-#include "CO2.h"
-
 /*
-* Purpose: initializes the DHT sensor and polls the sensor till it obtains
-* temperature and humidity data. This needs to be in a .ino file
-* (not c file) as DHT library code is in c++.
-* Output: the TH struct containing all DHT sensor data
-*/
-struct TH init_dht(void) {
 
-  /* to determine whether a temp and humidity reading was obtained, we
-   initialize them to -1000 since those are invalid values */
-  struct TH t_h = {-1000, -1000};
-  float h;
-  float t;
+ Udp NTP Client adapted from : https://www.arduino.cc/en/Tutorial/UdpNtpClient
 
-  // initialize DHT sensor
-  DHT dht(PIN_DHT, DHTTYPE);
-  dht.begin();
 
-  int attempt = 0; // track number of poll attempts
-
-  // try to poll data for 20 secs max
-  do {
-    // can only poll every 2 seconds
-    delay(2000);
-    // reading temperature or humidity takes about 250 ms
-    h = dht.readHumidity();
-    // read temperature as Celsius (default)
-    t = dht.readTemperature();
-    attempt++;
-  } while((isnan(h) || isnan(t)) & attempt < 10);
-
-  if (!isnan(t)) {
-    t_h.t = t;
-  }
-  if (!isnan(h)) {
-    t_h.h = h;
-  }
-
-  return t_h;
-}
+ */
+#include <SPI.h>
+#include <Ethernet.h>
+#include <EthernetUdp.h>
+#include <Time.h>
+#include <TimeLib.h>
+#include "constants.h"
 
 void setup() {
+  // Open serial communications and wait for port to open:
   Serial.begin(9600);
-  // set default reference voltage (5V)
-  analogReference(DEFAULT);
-
-  int error;
-
-  /* DHT temperature and humidity code */
-  struct TH t_h = init_dht();
-
-  error = FALSE;
-  float t = get_temp(t_h, &error);
-  if (error) {
-    Serial.println(ERROR_TEMP);
-  }
-  error = FALSE;
-  float h = get_humidity(t_h, &error);
-  if (error) {
-    Serial.println(ERROR_HUMIDITY);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  Serial.print("Temperature: ");
-  Serial.print(t);
-  Serial.println(" °C");
-  Serial.print("Humidity: ");
-  Serial.println(h);
+  Serial.println("Initializing UDP");
+  initialize_UDP();
 
-  /* CO2 code */
-  float co2_volt, co2_conc;
+  send_NTP_packet(timeServer); // send an NTP packet to a time server
 
-  error = FALSE;
-  co2_volt = get_co2_voltage(&error);
-  if (error) {
-    Serial.println(ERROR_GCO2V);
-  }
-  error = FALSE;
-  co2_conc = get_co2_concentration(co2_volt, &error);
-  if (error) {
-    Serial.println(ERROR_GCO2C);
-  }
-  Serial.print("CO2 Concentration: ");
-  Serial.print(co2_conc);
-  Serial.println(" ppm");
+  // wait to see if a reply is available
+  delay(DELAY_TIME);
 
-  /* SD interfacing code */
-  error = FALSE;
-  struct SD_card sd = init_sd(TXT_FILE, &error); 
+  // Set the time accounting for the delay
+  setTime(parse_NTP_packet() + ((DELAY_TIME) / 1000));
 
-  // writes/reads to SD Card if initialized properly
-  if(!error) {
-    Serial.println("Begin writing to SD");
-    write_sd(sd, t, h, co2_conc, &error);
-  }
-  error = FALSE;
-  read_sd(sd, &error);
-  Serial.println("SD Finished");
 }
 
 void loop() {
+  String formattedTime;
 
+  formattedTime = get_formatted_time();
+  Serial.println(formattedTime);
+  // wait ten seconds before asking for the time again
+  Ethernet.maintain();
+
+  delay(DELAY_TIME);
 }
+
+/*
+* Purpose: Sends an NTP request to the time server at the given address
+*/
+void send_NTP_packet(char* address) {
+  // set all bytes in the buffer to 0
+  memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  // Initialize values needed to form NTP request
+  // (see URL above for details on the packets)
+  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+  packetBuffer[1] = 0;     // Stratum, or type of clock
+  packetBuffer[2] = 6;     // Polling Interval
+  packetBuffer[3] = 0xEC;  // Peer Clock Precision
+  // 8 bytes of zero for Root Delay & Root Dispersion
+  packetBuffer[12]  = 49;
+  packetBuffer[13]  = 0x4E;
+  packetBuffer[14]  = 49;
+  packetBuffer[15]  = 52;
+
+  // all NTP fields have been given values, now
+  // you can send a packet requesting a timestamp:
+  Udp.beginPacket(address, 123); //NTP requests are to port 123
+  Udp.write(packetBuffer, NTP_PACKET_SIZE);
+  Udp.endPacket();
+}
+
+/*
+* Purpose: Initializes Ethernet and UDP
+*/
+void initialize_UDP(){
+  // start Ethernet and UDP
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println(ERROR_INITUDP);
+    return;
+  }
+  
+  Udp.begin(localPort);
+}
+
+/*
+* Purpose: Parses the NTP packet and turns the timestamp into the Unix epoch
+* Output: unsigned long that is the Unix epoch in seconds
+*/
+unsigned long parse_NTP_packet(){
+  if (Udp.parsePacket()) {
+      // We've received a packet, read the data from it
+      Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+  
+      // the timestamp starts at byte 40 of the received packet and is four bytes,
+      // or two words, long. First, extract the two words:
+  
+      unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+      unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+      // combine the four bytes (two words) into a long integer
+      // this is NTP time (seconds since Jan 1 1900):
+      unsigned long secsSince1900 = highWord << 16 | lowWord;
+  
+      // now convert NTP time into everyday time:
+      // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+      const unsigned long seventyYears = 2208988800UL;
+      // subtract seventy years:
+      unsigned long epoch = secsSince1900 - seventyYears - EIGHT_HOURS;
+
+      return epoch;
+    }
+}
+
+/*
+* Purpose: Puts the current time in YYYY-MM--DD HH::MM::SS (24-hour format) into a string
+* Input: 
+* Output: clockTime, contains time in YYYY-MM--DD HH::MM::SS (24-hour format)
+*/
+String get_formatted_time(){
+
+  String clockTime,years, months, days, hours, minutes, seconds, zero;
+  zero = "0";
+  
+  years = String(year());
+  months = String(month());
+  days = String(day());
+
+  hours = String(hour());
+  if(hour() < 10){
+    hours = String(zero + hours);
+  }
+  
+  minutes = String(minute());
+  if(minute() < 10){
+    minutes = String(zero + minutes);
+  }
+  
+  seconds = String(second());
+  if(second() < 10){
+    seconds = String(zero + seconds);
+  }
+
+  clockTime = String(years + '-' + months + "-" + days + " " + hours + "::" + minutes + "::" + seconds);
+
+  return clockTime;
+      
+}
+
