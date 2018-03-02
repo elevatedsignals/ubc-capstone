@@ -5,119 +5,166 @@
 
 #define TRUE 1
 #define FALSE 0
-#define SRC_ADDRESS 0x0000
-#define DEST_ADDRESS 0xFFFF
+#define SRC_ADDRESS "0xCE06" // for informational purposes only
+#define DEST_ADDRESS 0xAB7F
+#define PACKET_SIZE 100
+
+// XBEE channel = C, pan id = F5D9
 
 XBee xbee = XBee();
+XBeeResponse response = XBeeResponse();
+Rx16Response rx16 = Rx16Response();
+
+// dont start unless we got/set current time
+int gotTime = FALSE;
 
 void setup() {
 
-  Serial.begin(9600); //Baud rate must be the same as is on xBee module
-  xbee.setSerial(Serial);
-  
-  char * msg = "{uniqueid: 123, timestamp: 00:12:14}"; // example msg
-  
-  if (sendXbee(msg)) {
-    // success, go to sleep
-  }
-  else {
-    // fail, write to sd
-  }
+    Serial.begin(9600); //Baud rate must be the same as is on xBee module
+    xbee.setSerial(Serial);
 
 }
 
 
 void loop() {
 
+    while (!gotTime) {
+        delay(1000);
+        Serial.println("Waiting for time before starting");
+        gotTime = getTime();
+    }
+
+    char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; // TODO example msg
+
+    if (sendXbee(msg)) {
+        // TODO success, go to sleep
+        Serial.println("Msg sent");
+    }
+    else {
+        // TODO fail, write to sd
+        Serial.println("Msg failed to send");
+    }
+
 }
 
 int sendXbee(char * msg) {
-  
-  printf("Sending xbee msg");
 
-  XBee xbee = XBee();
+    // 16-bit addressing: Enter address of remote XBee, typically the coordinator
+    Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t *)msg, strlen(msg));
+    TxStatusResponse txStatus = TxStatusResponse();
 
-  // 16-bit addressing: Enter address of remote XBee, typically the coordinator
-  Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t *)msg, strlen(msg)); // TODO
+    xbee.send(tx);
 
-  TxStatusResponse txStatus = TxStatusResponse();
+    // after sending a tx request, we expect a status response
+    // wait up to 2 seconds for the status response
+    if (xbee.readPacket(2000)) {
 
-  xbee.send(tx);
+        // if a tx request is complete APIidentifier == 0x89
+        if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
+            // get status frame
+            xbee.getResponse().getTxStatusResponse(txStatus);
 
-  // after sending a tx request, we expect a status response
-  // wait up to 5 seconds for the status response
-  if (xbee.readPacket(5000)) {
-    // got a response!
-    printf("got a respnose");
+            // get the delivery status, 6th frame byte == 0
+            if (txStatus.getStatus() == SUCCESS) {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
 
-    // if a tx request is complete APIidentifier == 0x89     	
-    if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
-      // get status frame
-      xbee.getResponse().getTxStatusResponse(txStatus);
+    }
 
-      // get the delivery status, 6th frame byte == 0
-      if (txStatus.getStatus() == SUCCESS) {
-        printf("delivered");
-        return TRUE;
-      } else {
-        printf("undelivered");
+    return FALSE;
+
+}
+
+
+int getTime() {
+
+    // TODO send time request
+    char request[PACKET_SIZE] = "";
+    strcpy(request, "{ request time, srcAddr:");
+    strcat(request, SRC_ADDRESS);
+    strcat(request, "}");
+
+    // send time request
+    if (!sendXbee(request)) {
         return FALSE;
-      }
     }
 
-  }
 
-  return FALSE;
+    // wait for response containing timestamp
+    uint8_t data = 0;
+
+    xbee.readPacket(2000); // wait max 2 secs
+
+    if (xbee.getResponse().isAvailable()) {
+
+        if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
+            // got RX packet with 16 bit address
+            xbee.getResponse().getRx16Response(rx16);
+
+            char msg[PACKET_SIZE] = ""; // TODO adjust size based on msg length
+            int i;
+            // read the whole message
+            for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
+                data = rx16.getData(i);
+                msg[i] = data;;
+            }
+            msg[i] = '\0';
+
+            Serial.println(msg);
+
+            // this is a valid msg to handle
+            if (strstr(msg, "{") && strstr(msg, "}")) {
+                Serial.println("valid");
+
+                // request for timestamp or message with sensor data?
+                if (strstr(msg, "time response") != NULL) {
+                    // this message contains the time
+
+                    char *time = extractTime(msg);
+                    if (time != NULL ) {
+                        // got the time
+                        Serial.println("Received current time: ");
+                        Serial.println(time);
+                        // TODO set time
+                        return TRUE;
+                    }
+
+                }
+
+            }
+
+
+        }
+
+    }
+
+    return FALSE;
 
 }
 
-/*
-int send(char * msg) {
+char* extractTime(char *message) {
 
-  Serial.println("< %s >", msg); // send data
+    char msg[PACKET_SIZE];
+    strcpy(msg, message);
 
-  int count = 0;
-  int found = FALSE;
+    char *time;
+    char *token;
 
-  char * recv
+    // format should be {time response, current time=<time>}
+    // where <time> is the timestamp
+    // cant use ':' as timestamp will contain that so wont parse properly
+    if ( strstr(msg, "current time") != NULL ) {
+        token = strtok(msg, "}");
+        token = strstr(token, "=");
+        memmove(token, token+1, strlen(token)-1);
+        time = token;
 
-  // wait for ack, at most ~10 seconds
-  while (!found) {
-    // if theres data, verify its an ack for us
-    if (Serial.available() > 0) {
-      int i = 0;
-      while (Serial.available() > 0) { // read it all
-        recv[i] = Serial.read();
-        i++;
-      }
-      recv[i] = '\0';
-
-      // if the msg contained an ack for us, return true
-      if (strstr(recv, SENSORID) && strstr(recv, "ack")) {}
+        return time;
     }
 
-    // keep waiting till timeout
-    if (count >= 10) {
-      break;
-    }
-    delay(1000);
-    count++;
-  }
-
-  return FALSE;
+    return NULL;
 }
-*/
-// notes
 
-/*
-2) trade off between power consumption and range, mesh networks and interrupts for loopback
-- if we want sensor modules to comm with eachother,
-this requires they all be on always to be able to receieve the msgs, extra interrupt
--since we want to maximimize
-battery life, they are put to sleep. so sensor modules can only comm with base station,
-must be 30 meters in range.
-3) at base-station, verify the incoming data is valid (contains sensor id, timestamp, and sensor values)
-4) use api  mode 2
-8) serial port may be unavailable for debugging as xbee uses it
-9) verify uint16_t ZBRxResponse::getRemoteAddress16() 
-*/
