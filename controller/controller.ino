@@ -3,6 +3,7 @@
 #include "TH.h"
 #include "SDCard.h"
 #include "CO2.h"
+#include "airflow.h"
 
 /*
 * Purpose: initializes the DHT sensor and polls the sensor till it obtains
@@ -27,13 +28,13 @@ struct TH init_dht(void) {
   // try to poll data for 20 secs max
   do {
     // can only poll every 2 seconds
-    delay(2000);
+    delay(500);
     // reading temperature or humidity takes about 250 ms
     h = dht.readHumidity();
     // read temperature as Celsius (default)
     t = dht.readTemperature();
     attempt++;
-  } while((isnan(h) || isnan(t)) & attempt < 10);
+  } while((isnan(h) || isnan(t)) & attempt < 5);
 
   if (!isnan(t)) {
     t_h.t = t;
@@ -84,10 +85,29 @@ void setup() {
   co2_conc = get_co2_concentration(co2_volt, &error);
   if (error) {
     Serial.println(ERROR_GCO2C);
+    co2_conc = -1000;
   }
   Serial.print("CO2 Concentration: ");
   Serial.print(co2_conc);
   Serial.println(" ppm");
+
+  /* Airflow code */
+  float airflow_MPH; 
+  bool airflow_bool;
+
+  error = FALSE;
+  airflow_MPH = get_wind_speed(&error);
+  if (error) {
+    Serial.println(ERROR_AIRFLOW);
+    airflow_MPH = -1000;
+  }
+  airflow_bool = get_airflow(airflow_MPH);
+  if (airflow_bool) {
+    Serial.println("Airflow: Yes");
+  }
+  else {
+    Serial.println("Airflow: No");
+  }
 
   /* SD interfacing code */
   error = FALSE;
@@ -96,7 +116,7 @@ void setup() {
   // writes/reads to SD Card if initialized properly
   if(!error) {
     Serial.println("Begin writing to SD");
-    write_sd(sd, t, h, co2_conc, &error);
+    write_sd(sd, t, h, co2_conc, airflow_bool, &error);
   }
   error = FALSE;
   read_sd(sd, &error);
@@ -104,5 +124,4 @@ void setup() {
 }
 
 void loop() {
-
 }
