@@ -15,9 +15,9 @@
 #define FALSE 0
 
 /*
- *  Purpose: Polls the Infrared CO2 Sensor till it obtains a sensor voltage
- *  Input: A float containing the CO2 sensor voltage in millivolts (mV)
- *  Output: A float containing the CO2 sensor voltage
+ *  Purpose: Polls the Infrared CO2 Sensor till it obtains a sensor voltage in
+ *           millivolts (mV)
+ *  Output: A float containing the CO2 sensor voltage (mV)
  */
 float get_co2_voltage(int *error) {
   int sensor_value;
@@ -43,7 +43,7 @@ float get_co2_voltage(int *error) {
   float voltage = sensor_value * (5000 / 1023.0);
 
   // check for invalid output
-  if (voltage < 400 || voltage > 2000) {
+  if(voltage < 400 || voltage > 2000) {
     *error = TRUE;
     return voltage;
   }
@@ -52,23 +52,24 @@ float get_co2_voltage(int *error) {
 }
 
 /*
- *  Purpose: Converts the Infrared CO2 sensor voltage to its equivalent CO2
- *           concentration in ppm
- *  Input: A float containing the CO2 sensor voltage
- *  Output: A float containing the CO2 concenctration in ppm
+ *  Purpose: Converts the Infrared CO2 sensor voltage in millivolts (mV) to its
+ *           equivalent CO2 concentration in parts per million (ppm)
+ *  Input: A float containing the CO2 sensor voltage (mV)
+ *  Output: A float containing the CO2 concentration (ppm)
  */
 float get_co2_concentration(float voltage, int *error) {
   // check for invalid input
-  if (voltage < 400 || voltage > 2000) {
+  if(voltage < 400 || voltage > 2000) {
     *error = TRUE;
     return voltage;
   }
 
+  // calculate voltage difference and corresponding CO2 concentration value
   int voltage_difference = voltage - 400;
   float co2_conc = voltage_difference * (50.0 / 16.0);
 
-  //check for invalid output
-  if (co2_conc < 0 || co2_conc > 5000) {
+  // check for invalid output
+  if(co2_conc < 0 || co2_conc > 5000) {
     *error = TRUE;
     return co2_conc;
   }

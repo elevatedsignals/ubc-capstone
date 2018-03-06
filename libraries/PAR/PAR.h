@@ -15,8 +15,9 @@
 #define FALSE 0
 
 /*
- *  Purpose: Polls the PAR Sensor till it obtains a sensor voltage
- *  Output: A float containing the PAR sensor voltage
+ *  Purpose: Polls the PAR Sensor till it obtains a sensor voltage in millivolts
+ *           (mV)
+ *  Output: A float containing the PAR sensor voltage (mV)
  */
 float get_par_voltage(int *error) {
   int sensor_value;
@@ -46,22 +47,24 @@ float get_par_voltage(int *error) {
   voltage *= (5000 / 1023.0);
 
   // check for invalid output
-  if (voltage < 0 || voltage > 4000) {
+  if(voltage < 0 || voltage > 4000) {
     *error = TRUE;
     return voltage;
   }
 
   return voltage;
 }
+
 /*
- *  Purpose: Converts the PAR sensor voltage to its equivalent light intensity
- *           micromole per square meter second (umol*m^(-2)*s^(-1)))
- *  Input: A float containing the PAR sensor voltage in millivolts (mV)
+ *  Purpose: Converts the PAR sensor voltage in millivolts (mV) to its
+ *           equivalent light intensity in micromole per square meter second
+ *           (umol*m^(-2)*s^(-1)))
+ *  Input: A float containing the PAR sensor voltage (mV)
  *  Output: A float containing the light intensity (umol*m^(-2)*s^(-1)))
  */
 float get_par_concentration(float voltage, int *error) {
   // check for invalid input
-  if (voltage < 0 || voltage > 4000) {
+  if(voltage < 0 || voltage > 4000) {
     *error = TRUE;
     return voltage;
   }
@@ -69,8 +72,8 @@ float get_par_concentration(float voltage, int *error) {
   // convert voltage to equivalent light intensity value
   float light_intensity = voltage * 100.0;
 
-  //check for invalid output
-  if (light_intensity < 0 || light_intensity > 4000) {
+  // check for invalid output
+  if(light_intensity < 0 || light_intensity > 4000) {
     *error = TRUE;
     return light_intensity;
   }
