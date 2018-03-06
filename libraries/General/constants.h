@@ -7,6 +7,7 @@
 #define MODULE_ID 12345
 #define PIN_CO2 A0
 #define PIN_DHT 2
+#define PIN_PAR A3
 #define PIN_SD 10
 #define PIN_SD_CHECK 9
 
