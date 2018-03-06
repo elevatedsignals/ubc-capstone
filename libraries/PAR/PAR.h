@@ -47,7 +47,7 @@ float get_par_voltage(int *error) {
   voltage *= (5000 / 1023.0);
 
   // check for invalid output
-  if(voltage < 0 || voltage > 4000) {
+  if(voltage < 0 || voltage > 40) {
     *error = TRUE;
     return voltage;
   }
@@ -64,7 +64,7 @@ float get_par_voltage(int *error) {
  */
 float get_par_concentration(float voltage, int *error) {
   // check for invalid input
-  if(voltage < 0 || voltage > 4000) {
+  if(voltage < 0 || voltage > 40) {
     *error = TRUE;
     return voltage;
   }
