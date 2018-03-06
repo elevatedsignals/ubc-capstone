@@ -56,7 +56,7 @@ float get_par_voltage(int *error) {
 /*
  *  Purpose: Converts the PAR sensor voltage to its equivalent light intensity
  *           micromole per square meter second (umol*m^(-2)*s^(-1)))
- *  Input: A float containing the PAR sensor voltage
+ *  Input: A float containing the PAR sensor voltage in millivolts (mV)
  *  Output: A float containing the light intensity (umol*m^(-2)*s^(-1)))
  */
 float get_par_concentration(float voltage, int *error) {

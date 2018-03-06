@@ -16,6 +16,7 @@
 
 /*
  *  Purpose: Polls the Infrared CO2 Sensor till it obtains a sensor voltage
+ *  Input: A float containing the CO2 sensor voltage in millivolts (mV)
  *  Output: A float containing the CO2 sensor voltage
  */
 float get_co2_voltage(int *error) {
