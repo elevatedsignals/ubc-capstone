@@ -56,14 +56,13 @@ void requestHandler() {
                     
                     // TODO if success, check commFailureOccured
                     // TODO if occured, resend old data
-                    // TODO if fail, set commFailureOccured, store SD
+                    // TODO if fail, set commFailureOccured, store on SD
             }
             else if (type == 1) {
               // get clients address
                     uint16_t srcAddr = rx16.getRemoteAddress16();
 
-                    // TODO get time from NTP
-                    String formattedTime = "1pm";
+                    String formattedTime = "1pm"; // TODO get time from NTP
                     char *time = const_cast<char*>(formattedTime.c_str());
                     respondToClient(time, srcAddr);
 
