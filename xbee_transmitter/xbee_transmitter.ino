@@ -17,6 +17,7 @@ Rx16Response rx16 = Rx16Response();
 
 // dont start unless we got/set current time
 int gotTime = FALSE;
+volatile int commFailureOcurred = FALSE;
 
 void setup() {
 
@@ -37,13 +38,25 @@ void loop() {
     char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; // TODO example msg
 
     if (sendXbee(msg)) {
-        // TODO success, go to sleep
+        if (commFailureOcurred) {
+          // TODO get all data from SD and try to send
+          // send data line by line
+          // function should ensure each line was sent,
+          // erase the data sucessfully sent
+          // keep the data that failed
+          // if all success,  commFailureOcurred = FALSE;
+          // if any failed, commFailureOccurred = TRUE;
+        }
+      
         Serial.println("Msg sent");
     }
     else {
-        // TODO fail, write to sd
+        commFailureOcurred = TRUE;
+        // TODO fail, write this line to sd
         Serial.println("Msg failed to send");
     }
+    
+    // TODO go to sleep
 
 }
 
@@ -81,7 +94,6 @@ int sendXbee(char * msg) {
 
 int getTime() {
 
-    // TODO send time request
     char request[PACKET_SIZE] = "";
     strcpy(request, "{ request time, srcAddr:");
     strcat(request, SRC_ADDRESS);
@@ -119,7 +131,6 @@ int getTime() {
             if (strstr(msg, "{") && strstr(msg, "}")) {
                 Serial.println("valid");
 
-                // request for timestamp or message with sensor data?
                 if (strstr(msg, "time response") != NULL) {
                     // this message contains the time
 
@@ -128,7 +139,8 @@ int getTime() {
                         // got the time
                         Serial.println("Received current time: ");
                         Serial.println(time);
-                        // TODO set time
+                        // TODO parse the time for setTime?
+                       // TODO  set time
                         return TRUE;
                     }
 

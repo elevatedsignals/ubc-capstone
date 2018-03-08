@@ -8,6 +8,7 @@
 #define DEST_ADDRESS 0xCE06
 #define PACKET_SIZE 80
 
+// XBEE channel = C, pan id = F5D9
 XBee xbee = XBee();
 XBeeResponse response = XBeeResponse();
 Rx16Response rx16 = Rx16Response();
@@ -56,7 +57,11 @@ void requestHandler() {
                     
                     // TODO if success, check commFailureOccured
                     // TODO if occured, resend old data
-                    // TODO if fail, set commFailureOccured, store on SD
+                    // line by line, erase lines successfully sent
+                    // keep lines that didnt send
+                    // if all old data was sent, commFailureOccured = TRUE
+                    
+               // TODO if fail, set commFailureOccured, store on SD
             }
             else if (type == 1) {
               // get clients address
