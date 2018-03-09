@@ -4,7 +4,7 @@
 #include "SDCard.h"
 #include "CO2.h"
 #include "airflow.h"
-#include <XBee.h>
+#include "XBee.h"
 
 // sensor module/transmitter code
 
@@ -123,7 +123,7 @@ void setup() {
     }
 
   /* SD interfacing code */
-  SDerror = FALSE;
+  int SDerror = FALSE;
   // TODO we shouldnt initialize everytime when we refactor this
   struct SD_card sd = init_sd(TXT_FILE, &SDerror); 
 
