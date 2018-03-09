@@ -11,4 +11,5 @@ before_install:
 install:
   - arduino --install-library "Time"
 script:
-  - arduino --verify --board arduino:avr:uno controller/controller.ino
+  - arduino --verify --board arduino:avr:uno controller_sensormod/controller_sensormod.ino
+  - arduino --verify --board arduino:avr:uno controller_base/controller_base.ino
