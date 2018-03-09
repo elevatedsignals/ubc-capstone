@@ -47,7 +47,7 @@ struct SD_card {
  * Purpose: Write to SD file name and return whether or not write was successful
  * Output: true or false
  */
-int write_sd(struct SD_card sd, float temperature_data, float humidity_data, float CO2_data, int *error) {
+int write_sd(struct SD_card sd, float temperature_data, float humidity_data, float CO2_data, bool airflow_data, int *error) {
 
   // open file for writing
   sd.write_file = SD.open(sd.file_name, FILE_WRITE);
@@ -83,6 +83,21 @@ int write_sd(struct SD_card sd, float temperature_data, float humidity_data, flo
   }
   else{
       sd.write_file.print(CO2_data);
+  }
+
+   sd.write_file.print(",");
+
+  sd.write_file.print("\"air flow\":");
+  if(CO2_data == ERROR_VALUE) {
+    sd.write_file.print("NaN");
+  }
+  else{
+      if (airflow_data == TRUE) {
+        sd.write_file.print("Yes");
+      }
+      else {
+        sd.write_file.print("No");
+      }
   }
   sd.write_file.print(" }\n");
 
