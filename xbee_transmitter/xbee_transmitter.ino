@@ -17,7 +17,7 @@ Rx16Response rx16 = Rx16Response();
 
 // dont start unless we got/set current time
 int gotTime = FALSE;
-volatile int commFailureOcurred = FALSE;
+volatile int commFailureOccured = FALSE;
 
 void setup() {
 
@@ -38,7 +38,7 @@ void loop() {
     char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; // TODO example msg
 
     if (sendXbee(msg)) {
-        if (commFailureOcurred) {
+        if (commFailureOccured) {
           // TODO get all data from SD and try to send
           // send data line by line
           // function should ensure each line was sent,
@@ -51,7 +51,7 @@ void loop() {
         Serial.println("Msg sent");
     }
     else {
-        commFailureOcurred = TRUE;
+        commFailureOccured = TRUE;
         // TODO fail, write this line to sd
         Serial.println("Msg failed to send");
     }
