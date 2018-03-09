@@ -31,5 +31,4 @@
 #define ERROR_INITSD "Error: Failed to initialize SD Card"
 #define ERROR_INITUDP "Error: Failed to configure Ethernet using DHCP"
 
-
 #endif
