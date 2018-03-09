@@ -13,6 +13,8 @@
 #define DHTTYPE DHT22
 
 #define TXT_FILE "data.txt"
+#define EIGHT_HOURS 28800
+#define DELAY_TIME 1000
 
 #define ERROR_TEMP "Error: DHT Temperature sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity sensor"
@@ -20,6 +22,6 @@
 #define ERROR_GCO2C "get_co2_concentration error: input/output outside expected range (400 - 2000/0 - 5000)\n"
 #define ERROR_NOSD "Error: No SD Card Inserted"
 #define ERROR_INITSD "Error: Failed to initialize SD Card"
-
+#define ERROR_INITUDP "Error: Failed to configure Ethernet using DHCP"
 
 #endif
