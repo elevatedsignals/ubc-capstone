@@ -232,8 +232,8 @@ int getTime(XBee xbee) {
                         // got the time
                         Serial.println("Received current time: ");
                         Serial.println(time);
-                        // TODO parse the time for setTime?
-                       // TODO  set time
+                       
+                      setTime(time); // TODO verify
                         return TRUE;
                     }
 
@@ -248,6 +248,31 @@ int getTime(XBee xbee) {
 
     return FALSE;
 
+}
+
+char* setTime(char *time) {
+  /*
+                      char hr[3];
+                      memcpy(hr, &time[0], 2);
+                      hr[2] = '\0';
+                      char min[3];
+                      memcpy(min, &time[4], 2);
+                      hr[2] = '\0';
+                      char sec[3];
+                      memcpy(sec, &time[8], 2);
+                      sec[2] = '\0';
+                      char day[3];
+                      memcpy(day, &time[11], 2);
+                      day[2] = '\0';
+                      char month[3];
+                      memcpy(month, &time[14], 2);
+                      month[2] = '\0';
+                      char yr[5];
+                      memcpy(yr, &time[17], 4);
+                      yr[4] = '\0';
+                      setTime(hr,min,sec,day,month,yr);
+                      */
+  
 }
 
 char* extractTime(char *message) {
