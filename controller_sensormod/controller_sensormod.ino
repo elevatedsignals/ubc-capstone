@@ -228,8 +228,27 @@ int getTime() {
                         Serial.println("Received current time: ");
                         Serial.println(time);
                         // TODO parse the time for each integer, and use setTime below
-                      // ie: set the current time from "14::27::00,14-12-2018" hr,min,sec,day,month,yr
-                      // setTime(14, 27, 00, 14, 12, 2015);
+                      /*
+                      char hr[3];
+                      memcpy(hr, &time[0], 2);
+                      hr[2] = '\0';
+                      char min[3];
+                      memcpy(min, &time[4], 2);
+                      hr[2] = '\0';
+                      char sec[3];
+                      memcpy(sec, &time[8], 2);
+                      sec[2] = '\0';
+                      char day[3];
+                      memcpy(day, &time[11], 2);
+                      day[2] = '\0';
+                      char month[3];
+                      memcpy(month, &time[14], 2);
+                      month[2] = '\0';
+                      char yr[5];
+                      memcpy(yr, &time[17], 4);
+                      yr[4] = '\0';
+                      setTime(hr,min,sec,day,month,yr);
+                      */
                         return TRUE;
                     }
 
