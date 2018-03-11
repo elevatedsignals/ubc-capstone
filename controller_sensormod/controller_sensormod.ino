@@ -15,9 +15,6 @@
 #define PACKET_SIZE 100
 
 // XBEE channel = C, pan id = F5D9
-XBee xbee = XBee();
-XBeeResponse response = XBeeResponse();
-Rx16Response rx16 = Rx16Response();
 
 // dont start unless we got/set current time
 int gotTime = FALSE;
@@ -26,18 +23,20 @@ volatile int commFailureOccured = FALSE;
 void setup() {
   
   Serial.begin(9600);
+  Serial.println(gotTime);
+  XBee xbee = XBee();
   xbee.setSerial(Serial);
-  
-  // set default reference voltage (5V)
-  analogReference(DEFAULT);
-  
+ 
+/*
   // get current time before starting
   while (!gotTime) {
         delay(1000);
         Serial.println("Waiting for time before starting");
-        gotTime = getTime();
+        gotTime = getTime(xbee);
     }
-
+  // set default reference voltage (5V)
+  analogReference(DEFAULT);
+*/
   int error;
 
   /* DHT temperature and humidity code */
@@ -100,7 +99,8 @@ void setup() {
     // TODO format data for xbee like this needs to start with { and end with }
     char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; 
     error = FALSE;
-    if (sendXbee(msg)) {
+    if (sendXbee(msg, xbee)) {
+      //Serial.println("X");
         // keep track if previous data failed to send
         if (commFailureOccured) {
           
@@ -148,7 +148,7 @@ void loop() {
 
 
 
-int sendXbee(char * msg) {
+int sendXbee(char * msg, XBee xbee) {
 
     // 16-bit addressing: Enter address of remote XBee, typically the coordinator
     Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t *)msg, strlen(msg));
@@ -180,24 +180,29 @@ int sendXbee(char * msg) {
 }
 
 
-int getTime() {
+int getTime(XBee xbee) {
+  Rx16Response rx16 = Rx16Response();
 
+
+    Serial.println("BP 0");
     char request[PACKET_SIZE] = "";
     strcpy(request, "{ request time, srcAddr:");
     strcat(request, SRC_ADDRESS);
     strcat(request, "}");
 
+    Serial.println("BP 1");
     // send time request
-    if (!sendXbee(request)) {
+    if (!sendXbee(request, xbee)) {
+        Serial.println("BP 2");
         return FALSE;
     }
 
-
+    Serial.println("BP 3");
     // wait for response containing timestamp
     uint8_t data = 0;
 
     xbee.readPacket(2000); // wait max 2 secs
-
+    Serial.println("BP 4");
     if (xbee.getResponse().isAvailable()) {
 
         if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
@@ -227,28 +232,8 @@ int getTime() {
                         // got the time
                         Serial.println("Received current time: ");
                         Serial.println(time);
-                        // TODO parse the time for each integer, and use setTime below
-                      /*
-                      char hr[3];
-                      memcpy(hr, &time[0], 2);
-                      hr[2] = '\0';
-                      char min[3];
-                      memcpy(min, &time[4], 2);
-                      hr[2] = '\0';
-                      char sec[3];
-                      memcpy(sec, &time[8], 2);
-                      sec[2] = '\0';
-                      char day[3];
-                      memcpy(day, &time[11], 2);
-                      day[2] = '\0';
-                      char month[3];
-                      memcpy(month, &time[14], 2);
-                      month[2] = '\0';
-                      char yr[5];
-                      memcpy(yr, &time[17], 4);
-                      yr[4] = '\0';
-                      setTime(hr,min,sec,day,month,yr);
-                      */
+                        // TODO parse the time for setTime?
+                       // TODO  set time
                         return TRUE;
                     }
 
@@ -328,5 +313,3 @@ struct TH init_dht(void) {
 
   return t_h;
 }
-
-
