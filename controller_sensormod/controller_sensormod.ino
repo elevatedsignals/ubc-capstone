@@ -227,8 +227,9 @@ int getTime() {
                         // got the time
                         Serial.println("Received current time: ");
                         Serial.println(time);
-                        // TODO parse the time for setTime?
-                       // TODO  set time
+                        // TODO parse the time for each integer, and use setTime below
+                      // ie: set the current time from "14::27::00,14-12-2018" hr,min,sec,day,month,yr
+                      // setTime(14, 27, 00, 14, 12, 2015);
                         return TRUE;
                     }
 
