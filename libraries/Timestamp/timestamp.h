@@ -115,7 +115,7 @@ String get_formatted_time(){
     seconds = String(zero + seconds);
   }
 
-  clockTime = String(years + '-' + months + "-" + days + " " + hours + "::" + minutes + "::" + seconds);
+  clockTime = String(hours + "::" + minutes + "::" + seconds + "," + days + '-' + months + '-' + years);
 
   return clockTime;
       
