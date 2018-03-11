@@ -6,7 +6,8 @@
 #include "airflow.h"
 #include "XBee.h"
 
-// sensor module/transmitter code
+// Sensor module/transmitter code
+// XBEE channel = C, pan id = F5D9
 
 #define TRUE 1
 #define FALSE 0
@@ -14,10 +15,7 @@
 #define DEST_ADDRESS 0xAB7F
 #define PACKET_SIZE 100
 
-// XBEE channel = C, pan id = F5D9
-
-// dont start unless we got/set current time
-int gotTime = FALSE;
+int gotTime = FALSE; // dont start unless we set current time
 volatile int commFailureOccured = FALSE;
 
 void setup() {
@@ -28,7 +26,7 @@ void setup() {
   xbee.setSerial(Serial);
  
 /*
-  // get current time before starting
+  // get current time from base station before starting
   while (!gotTime) {
         delay(1000);
         Serial.println("Waiting for time before starting");
@@ -60,86 +58,80 @@ void setup() {
   Serial.println(h);
 
   /* CO2 code */
-  float co2_volt, co2_conc;
-
   error = FALSE;
-  co2_volt = get_co2_voltage(&error);
+  float co2_volt = get_co2_voltage(&error);
   if (error) {
     Serial.println(ERROR_GCO2V);
   }
   error = FALSE;
-  co2_conc = get_co2_concentration(co2_volt, &error);
+  float co2_conc = get_co2_concentration(co2_volt, &error);
   if (error) {
     Serial.println(ERROR_GCO2C);
     co2_conc = -1000;
   }
+  
   Serial.print("CO2 Concentration: ");
   Serial.print(co2_conc);
   Serial.println(" ppm");
 
   /* Airflow code */
-  float airflow_MPH; 
-  bool airflow_bool;
-
   error = FALSE;
-  airflow_MPH = get_wind_speed(&error);
+  float airflow_MPH = get_wind_speed(&error);
   if (error) {
     Serial.println(ERROR_AIRFLOW);
     airflow_MPH = -1000;
   }
-  airflow_bool = get_airflow(airflow_MPH);
+  bool airflow_bool = get_airflow(airflow_MPH);
   if (airflow_bool) {
     Serial.println("Airflow: Yes");
   }
   else {
     Serial.println("Airflow: No");
   }
+  
+  /* TODO PAR SENSOR */
 
   
+  /* XBee Wireless Communication */
     // TODO format data for xbee like this needs to start with { and end with }
     char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; 
     error = FALSE;
     if (sendXbee(msg, xbee)) {
-      //Serial.println("X");
-        // keep track if previous data failed to send
+        // if old data failed to send, try to send now
         if (commFailureOccured) {
-          
-          // TODO get all data from SD and try to send
-          // send data line by line
-          // function should ensure each line was sent,
-          // erase the data sucessfully sent
-          // keep the data that failed
-          // if all success,  commFailureOcurred = FALSE;
-          // if any failed, commFailureOccurred = TRUE;
+          /* TODO ERROR RECOVERY */
+          /* 
+            try to send data in SD line by line (over xbee, sendXbee)
+            function should ensure each line was sent,
+             erase the data sucessfully sent
+            keep the data that failed on SD
+            if all success,  commFailureOcurred = FALSE;
+            if any failed, commFailureOccurred = TRUE; */
         }
-      
         Serial.println("Msg sent over xbee");
     }
     else {
         error = TRUE;
         commFailureOccured = TRUE;
-        // TODO fail, write this msg to sd
-        Serial.println("Msg failed to send over xbee");
+        Serial.println("Msg failed to send over xbee, stord on SD.");
     }
+  
+        
+        /* SD interfacing code */
+        int SDerror = FALSE;
+        struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
 
-  /* SD interfacing code */
-  int SDerror = FALSE;
-  // TODO we shouldnt initialize everytime when we refactor this
-  struct SD_card sd = init_sd(TXT_FILE, &SDerror); 
-
-  // writes/reads to SD Card if initialized properly
-  // and there was a xbee communication failure
-  if(!SDerror && error) {
-    Serial.println("Begin writing to SD");
-    write_sd(sd, t, h, co2_conc, airflow_bool, &error);
-  }
+        // writes/reads to SD Card if initialized properly
+        if(!SDerror && error) {
+          Serial.println("Begin writing to SD");
+          write_sd(sd, t, h, co2_conc, airflow_bool, &error);
+        }
   
+        SDerror = FALSE;
+        read_sd(sd, &SDerror);
+        Serial.println("SD Finished");
   
-  SDerror = FALSE;
-  read_sd(sd, &SDerror);
-  Serial.println("SD Finished");
-  
-  // TODO go to sleep
+  /* TODO GO TO SLEEP */
   
 }
 
@@ -183,26 +175,22 @@ int sendXbee(char * msg, XBee xbee) {
 int getTime(XBee xbee) {
   Rx16Response rx16 = Rx16Response();
 
-
-    Serial.println("BP 0");
     char request[PACKET_SIZE] = "";
     strcpy(request, "{ request time, srcAddr:");
     strcat(request, SRC_ADDRESS);
     strcat(request, "}");
 
-    Serial.println("BP 1");
     // send time request
     if (!sendXbee(request, xbee)) {
         Serial.println("BP 2");
         return FALSE;
     }
 
-    Serial.println("BP 3");
     // wait for response containing timestamp
     uint8_t data = 0;
 
     xbee.readPacket(2000); // wait max 2 secs
-    Serial.println("BP 4");
+
     if (xbee.getResponse().isAvailable()) {
 
         if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
@@ -251,7 +239,7 @@ int getTime(XBee xbee) {
 }
 
 char* setTime(char *time) {
-  /*
+  /* TODO verify
                       char hr[3];
                       memcpy(hr, &time[0], 2);
                       hr[2] = '\0';
@@ -284,7 +272,6 @@ char* extractTime(char *message) {
     char *token;
 
     // format should be {time response, current time=<time>}
-    // where <time> is the timestamp
     // cant use ':' as timestamp will contain that so wont parse properly
     if ( strstr(msg, "current time") != NULL ) {
         token = strtok(msg, "}");
