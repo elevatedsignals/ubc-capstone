@@ -182,7 +182,6 @@ int getTime(XBee xbee) {
 
   // send time request
   if (!sendXbee(request, xbee)) {
-    Serial.println("BP 2");
     return FALSE;
   }
 
