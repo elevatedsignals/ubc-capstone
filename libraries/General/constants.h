@@ -11,13 +11,15 @@
 #define PIN_DHT 2
 #define PIN_SD 10
 #define PIN_SD_CHECK 9
+#define RX_PIN   3              // pin used for waking up
+
 
 #define DHTTYPE DHT22
 
 #define TXT_FILE "data.txt"
 #define EIGHT_HOURS 28800
 #define DELAY_TIME 1000
-
+#define ONE_MINUTE 60000000 // 60 seconds
 #define WIND_THRESHOLD 4
 
 #define ERROR_TEMP "Error: DHT Temperature Sensor"

@@ -1,3 +1,5 @@
+#include <avr/sleep.h>
+#include <avr/power.h>
 #include "constants.h"
 #include "DHT.h"
 #include "TH.h"
@@ -5,6 +7,8 @@
 #include "CO2.h"
 #include "airflow.h"
 #include "XBee.h"
+#include "TimerOne.h"
+#include "Polling.h"
 
 // Sensor module/transmitter code
 // XBEE channel = C, pan id = F5D9
@@ -24,6 +28,16 @@ void setup() {
   Serial.println(gotTime);
   XBee xbee = XBee();
   xbee.setSerial(Serial);
+
+  Serial.begin(9600);       // for testing
+  Serial.println("start");  // for testing
+    
+  pinMode(RX_PIN, INPUT);
+  attachInterrupt(1, wakeUpCommunication, LOW); // use interrupt 1 (pin 3) and run function
+                                                   // wakeUpCommunication when pin 3 gets LOW 
+                                      
+  Timer1.initialize(ONE_MINUTE/20);           // initialize timer1, and set a 60 second period
+  Timer1.attachInterrupt(wakeUpTimer); // attaches callback() as a timer overflow interrupt
  
 /*
   // get current time from base station before starting
@@ -136,6 +150,7 @@ void setup() {
 }
 
 void loop() {
+  sleepNow(); 
 }
 
 
