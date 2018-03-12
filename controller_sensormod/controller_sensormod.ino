@@ -23,7 +23,7 @@ volatile int commFailureOccured = FALSE;
 void setup() {
 
   Serial.begin(9600);
-  Serial.println(gotTime);
+
   XBee xbee = XBee();
   xbee.setSerial(Serial);
     
