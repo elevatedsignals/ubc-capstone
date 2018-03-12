@@ -3,24 +3,20 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#include <Time.h>
 #include <TimeLib.h>
 #include "constants.h"
 #include "timestamp.h"
 
 // RECEIVER/Base station code
+// XBEE channel = C, pan id = F5D9
 
 #define TRUE 1
 #define FALSE 0
 #define DEST_ADDRESS 0xCE06
 #define PACKET_SIZE 80
 
-
-// XBEE channel = C, pan id = F5D9
 XBee xbee = XBee();
-XBeeResponse response = XBeeResponse();
-Rx16Response rx16 = Rx16Response();
-
+// track whether there is existing data on SD
 volatile int commFailureOccured = FALSE;
 
 void setup() {
@@ -32,30 +28,26 @@ void setup() {
 
   // get time from NTP server over UDP
   send_NTP_packet(timeServer);
-
   // wait to see if a reply is available
   delay(DELAY_TIME);
-
   // Set the time accounting for above delay
   setTime(parse_NTP_packet() + ((DELAY_TIME) / 1000));
 
 }
 
 void loop() {
-
+  // wait for request from Sensor modules
   requestHandler();
-
 }
 
 /* Handles requests coming in from sensor modules via XBEE */
 void requestHandler() {
-
+  
   uint8_t data = 0;
-
+  Rx16Response rx16 = Rx16Response();
   xbee.readPacket();
 
   if (xbee.getResponse().isAvailable()) {
-
     if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
       // got RX packet with 16 bit address
       xbee.getResponse().getRx16Response(rx16);
@@ -72,7 +64,7 @@ void requestHandler() {
 
       int type = requestParser(msg);
 
-      if (type == 0) {
+      if (type == 0) { // contains sensor data
         // TODO send to server
 
         // TODO if fail, set commFailureOccured, store on SD
@@ -87,23 +79,19 @@ void requestHandler() {
                
         */
 
-        // if uploadExisting == true, commFailureOccured = TRUE
-
-      } else if (type == 1) {
-        // get clients address
-        uint16_t srcAddr = rx16.getRemoteAddress16();
+        // if uploadExisting == true, commFailureOccured = FALSE
+  
+      } else if (type == 1) { // request for timestamp
+        
+        uint16_t srcAddr = rx16.getRemoteAddress16(); // get clients addr so we can respond
 
         String formattedTime = get_formatted_time();
-        Ethernet.maintain(); // TODO, needed? we shouldnt need to contact server again
+        Ethernet.maintain(); // TODO, needed? we shouldnt need to contact NTP server again
         char * time = const_cast < char * > (formattedTime.c_str());
         respondToClient(time, srcAddr);
-
       }
-
     }
-
   }
-
 }
 
 /* Determine what kind of request msg is 
@@ -116,17 +104,14 @@ int requestParser(char * msg) {
   // this is a valid msg to handle
   if (strstr(msg, "{") && strstr(msg, "}")) {
 
-    // request for timestamp or message with sensor data?
     if (strstr(msg, "timestamp") != NULL) {
       // this message contains sensor data
       Serial.println("Receieved a msg containing sensor data");
       Serial.println(msg);
-
       return 0;
     }
     if (strstr(msg, "request time")) {
       Serial.println("Receieved a request for timestamp");
-
       return 1;
     }
   }
@@ -140,12 +125,11 @@ int requestParser(char * msg) {
 int respondToClient(char * time, uint16_t srcAddr) {
 
   char response[PACKET_SIZE] = "";
-
   strcpy(response, "{ time response, current time=");
   strcat(response, time);
   strcat(response, "}");
 
-  sendXbee(response, srcAddr);
+  sendXbee(response, srcAddr); // dont check for failure, let client retry
   Serial.println("Sending time back to client");
 
   return TRUE;
@@ -155,8 +139,6 @@ int respondToClient(char * time, uint16_t srcAddr) {
 * sends msg to client at addr over Xbee 
 */
 int sendXbee(char * msg, uint16_t addr) {
-
-  // dont need to ensure it was sent, let client retry
   Tx16Request tx = Tx16Request(addr, (uint8_t * ) msg, strlen(msg));
   xbee.send(tx);
 }
