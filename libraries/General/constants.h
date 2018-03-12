@@ -21,6 +21,7 @@
 #define DELAY_TIME 1000
 #define ONE_MINUTE 60000000 // 60 seconds
 #define WIND_THRESHOLD 4
+#define PACKET_SIZE 100 // for xbee data
 
 #define ERROR_TEMP "Error: DHT Temperature Sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity Sensor"
