@@ -38,36 +38,21 @@ EthernetClient init_ethernet(EthernetClient client) {
   return client;
 }
 
- /*
+/*
  *  Purpose: Prints any char/s received from the server for debugging purposes
  *          over serial
  */
- EthernetClient check_recv_buffer(EthernetClient client, int *error) {
-   int num_bytes_avail = client.available();
-
-   // ERROR CHECK IF CHARS ARE EXPECTED
-   // if(num_bytes_avail == 0) {
-   //   *error = TRUE;
-   //   Serial.println("Error: No char/s received from server.");
-   //   return client;
-   // }
-
-   while(num_bytes_avail >= 1) {
+EthernetClient check_recv_buffer(EthernetClient client, int *error) {
+   while(client.available()) {
      char c = client.read();
-
-     if(c == -1) {
-       break; //stop reading if no chars are left
-     }
-
      Serial.write(c);
-     num_bytes_avail--;
    }
 
    // IF ONLY SINGLE CHARS MAY BE RECEIVED
-   if (client.available()) {
-     char c = client.read();
-     Serial.write(c);
-   }
+   // if(client.available()) {
+   //   char c = client.read();
+   //   Serial.write(c);
+   // }
 
    return client;
 }
@@ -75,59 +60,50 @@ EthernetClient init_ethernet(EthernetClient client) {
 /*
 *  Purpose: Formats sensor data for upload
 */
-char* prepare_payload(String* payload, int data_type, float val) {
+char* prepare_payload(String *payload, int cap_id, float val, String *time_string) {
 
-  switch(data_type) {
-    case 0: {
-      *payload = "{\"API Key\":";
-      // *payload += API_KEY_TEMP;
-      *payload += "01"; // REPLACE TEST VALUE
+  switch(cap_id) {
+    case 58: { // ID_TEMP
+      *payload = "{\"capability_id\": 58";
       *payload += ",\"json_value\":{";
-      *payload += "\"Temperature (C)\":"+(String)val;
+      *payload += "\"temperatureMeasurement\":"+(String)val;
       break;
     }
-    case 1: {
-      *payload = "{\"API Key\":";
-      // *payload += API_KEY_TEMP;
-      *payload += "02"; // REPLACE TEST VALUE
+    case 43: { // ID_RHUM
+      *payload = "{\"capability_id\": 43";
       *payload += ",\"json_value\":{";
-      *payload += "\"Humidity (%)\":"+(String)val;
+      *payload += "\"relativeHumidityMeasurement\":"+(String)val;
       break;
     }
-    case 2: {
-      *payload = "{\"API Key\":";
-      // *payload += API_KEY_TEMP;
-      *payload += "03"; // REPLACE TEST VALUE
+    case 13: { // ID_CO2
+      *payload = "{\"capability_id\": 13";
       *payload += ",\"json_value\":{";
-      *payload += "\"CO2 Concentration (ppm)\":"+(String)val;
+      *payload += "\"carbonDioxideMeasurement\":"+(String)val;
       break;
     }
-    case 3: {
-      if(val == 1.0) {
-        *payload = "{\"API Key\":";
-        // *payload += API_KEY_TEMP;
-        *payload += "04"; // REPLACE TEST VALUE
-        *payload += ",\"json_value\":{";
-        *payload += "\"Airflow\":\"Yes\"";
-      } else {
-        *payload = "{\"API Key\":";
-        // *payload += API_KEY_TEMP;
-        *payload += "04"; // REPLACE TEST VALUE
-        *payload += ",\"json_value\":{";
-        *payload += "\"Airflow\":\"No\"";
-      }
+    case 29: { // ID_PAR
+      *payload = "{\"capability_id\": 29";
+      *payload += ",\"json_value\":{";
+      *payload += "\"light\":"+(String)val;
       break;
     }
-    // case 4: {
-    //   *payload = "{\"API Key\":";
-    //   // *payload += API_KEY_TEMP;
-    //   *payload += "05"; // REPLACE TEST VALUE
-    //   *payload += ",\"json_value\":{";
-    //   *payload += "\"PAR (PPFD)\": 2000";
-    // }
+    case 1: { // ID_AF
+      *payload = "{\"capability_id\": 1";
+      *payload += ",\"json_value\":{";
+      *payload += "\"airflowDetectionSensor\":"+(String)val;
+      break;
+    }
   }
 
-  *payload += "}}";
+  *payload += "}";
+
+  if(time_string != NULL) {
+    *payload += "\"timestamp\": \"";
+    *payload += *time_string;
+    *payload += "\"";
+  }
+
+  *payload += "}";
 
   return (char *)payload;
 }
@@ -142,26 +118,44 @@ EthernetClient make_http_request(EthernetClient client, String payload, int *err
   if (client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
 
     // Test an HTTP GET request
-    Serial.println("Sending 1st line: \"GET /search?q=arduino HTTP/1.1\"");
-    client.println("GET /search?q=arduino HTTP/1.1"); // REPLACE TEST VALUE
-    Serial.println("Sending 2nd line: \"Host: www.google.com\"");
-    client.println("Host: www.google.com"); // REPLACE TEST VALUE
-    Serial.println("Sending 3rd line: \"Connection: close\"");
-    client.println("Connection: close"); // REPLACE TEST VALUE
-    Serial.println("Sending 4th line: \"\"");
-    client.println(); // REPLACE TEST VALUE
+    // Serial.println("Sending 1st line: \"GET /search?q=arduino HTTP/1.1\"");
+    // client.println("GET /search?q=arduino HTTP/1.1"); // REPLACE TEST VALUE
+    // Serial.println("Sending 2nd line: \"Host: www.google.com\"");
+    // client.println("Host: www.google.com"); // REPLACE TEST VALUE
+    // Serial.println("Sending 3rd line: \"Connection: close\"");
+    // client.println("Connection: close"); // REPLACE TEST VALUE
+    // Serial.println("Sending 4th line: \"\"");
+    // client.println(); // REPLACE TEST VALUE
 
-    // client.println(HTTP_GET_REQUEST_L1);
-    // client.println(HTTP_GET_REQUEST_L2);
-    // client.println(HTTP_GET_REQUEST_L3);
-    // client.print(HTTP_GET_REQUEST_L4);
-    // client.println(payload.length());
-    // client.println(HTTP_GET_REQUEST_L5);
-    // client.println(payload);
+    client.println(HTTP_GET_REQUEST_L1);
+    client.println(HTTP_GET_REQUEST_L2);
+    client.println(HTTP_GET_REQUEST_L3);
+    client.println(HTTP_GET_REQUEST_L4);
+    client.print(HTTP_GET_REQUEST_L5);
+    client.println(payload.length());
+    client.println(HTTP_GET_REQUEST_L6);
+    // client.print("api_key="); //ALTERNATIVE METHOD TO SEND API KEY
+    // client.print(API_KEY); //ALTERNATIVE METHOD TO SEND API KEY
+    client.println(payload);
   } else {
     Serial.println("Error: Failed to establish connection with server.");
     *error = TRUE;
   }
+
+  return client;
+}
+
+/*
+*  Purpose: Sends a sensor value to the server using an HTTP 1.0 POST request
+*/
+EthernetClient send_to_server(EthernetClient client, String *payload, int cap_id, float val, String time_string, int *error) {
+  if(time_string == NULL) {
+    *payload = prepare_payload(payload, cap_id, val, NULL);
+  } else {
+    *payload = prepare_payload(payload, cap_id, val, &time_string);
+  }
+
+  // client = make_http_request(client, *payload, &error); // @TODO: Fix passing of payload and error
 
   return client;
 }

@@ -10,13 +10,21 @@
 #define INIT_ETHERNET_DELAY 1000
 #define DEFAULT_HTTP_PORT 80
 
-#define API_KEY bd16506f5a4d789465610a8806eec8b2
+#define ID_TEMP 58
+#define ID_RHUM 43
+#define ID_CO2 13
+#define ID_PAR 29
+#define ID_AF 1
+#define DT_AF 1
+
+#define API_KEY "bd16506f5a4d789465610a8806eec8b2"
 
 #define HTTP_GET_REQUEST_L1 "POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.0"
 #define HTTP_GET_REQUEST_L2 "Host: https://dashboard.elevatedsignals.com"
-#define HTTP_GET_REQUEST_L3 "Content-Type: application/json"
-#define HTTP_GET_REQUEST_L4 "Content-Length: "
-#define HTTP_GET_REQUEST_L5 ""
+#define HTTP_GET_REQUEST_L3 "api_key: bd16506f5a4d789465610a8806eec8b2"
+#define HTTP_GET_REQUEST_L4 "Content-Type: application/json"
+#define HTTP_GET_REQUEST_L5 "Content-Length: "
+#define HTTP_GET_REQUEST_L6 ""
 
 #define ERROR_HTTP_REQUEST "Error: Failed to make HTTP request"
 #define ERROR_RECV_BUFFER "Error: Failed to receive any char/s from server"
