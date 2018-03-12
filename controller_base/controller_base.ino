@@ -10,8 +10,6 @@
 // RECEIVER/Base station code
 // XBEE channel = C, pan id = F5D9
 
-#define DEST_ADDRESS 0xCE06
-
 XBee xbee = XBee();
 // track whether there is existing data on SD
 volatile int commFailureOccured = FALSE;
