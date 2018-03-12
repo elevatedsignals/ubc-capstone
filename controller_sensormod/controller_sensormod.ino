@@ -19,6 +19,7 @@
 
 int gotTime = FALSE; // dont start unless we set current time
 volatile int commFailureOccured = FALSE;
+
 void setup() {
 
   Serial.begin(9600);
@@ -26,12 +27,14 @@ void setup() {
   XBee xbee = XBee();
   xbee.setSerial(Serial);
     
-  pinMode(RX_PIN, INPUT);
-  attachInterrupt(1, wakeUpCommunication, LOW); // use interrupt 1 (pin 3) and run function
-                                                   // wakeUpCommunication when pin 3 gets LOW 
-                                      
-  Timer1.initialize(ONE_MINUTE/20);           // initialize timer1, and set a 60 second period
-  Timer1.attachInterrupt(wakeUpTimer); // attaches callback() as a timer overflow interrupt
+  pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
+  
+  // interrupt 1) on RX line (connected to pin 3) to wake up on xbee communication
+  attachInterrupt(1, wakeUpCommunication, LOW); 
+                                    
+  // interrupt 2) timer interrupt on 60 second interval
+  Timer1.initialize(ONE_MINUTE/20); // TODO change to every 10 min
+  Timer1.attachInterrupt(wakeUpTimer);
  
 /*
   // get current time from base station before starting
@@ -136,13 +139,14 @@ void setup() {
   read_sd(sd, & SDerror);
   Serial.println("SD Finished");
 
-  /* TODO GO TO SLEEP */
 }
 
 void loop() {
-  sleepNow(); // TODO, does this wake up at an interval (ie: every 1 min) or on xbee interrupt?
-              // & whats the difference between wakeupTimer and wakeupCommunication ?
+  
+  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
 
+  // TODO put main code here
+  
 }
 
 int sendXbee(char * msg, XBee xbee) {
