@@ -140,7 +140,8 @@ void setup() {
 }
 
 void loop() {
-  sleepNow(); 
+  sleepNow(); // TODO, does this wake up at an interval (ie: every 1 min) or on xbee interrupt?
+              // & whats the difference between wakeupTimer and wakeupCommunication ?
 
 }
 
