@@ -9,6 +9,7 @@
 #include "XBee.h"
 #include "TimerOne.h"
 #include "Polling.h"
+#include "TimeLib.h"
 
 // Sensor module/transmitter code
 // XBEE channel = C, pan id = F5D9
@@ -155,15 +156,12 @@ int sendXbee(char * msg, XBee xbee) {
   xbee.send(tx);
 
   // after sending a tx request, we expect a status response
-  // wait up to 2 seconds for the status response
-  if (xbee.readPacket(2000)) {
+  if (xbee.readPacket(2000)) { // wait up to 2 seconds for status
 
     // if a tx request is complete APIidentifier == 0x89
     if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
-      // get status frame
       xbee.getResponse().getTxStatusResponse(txStatus);
-
-      // get the delivery status, 6th frame byte == 0
+      // get the delivery status, 6th frame byte == 0 for success
       if (txStatus.getStatus() == SUCCESS) {
         return TRUE;
       } else {
@@ -197,12 +195,11 @@ int getTime(XBee xbee) {
   xbee.readPacket(2000); // wait max 2 secs
 
   if (xbee.getResponse().isAvailable()) {
-
     if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
       // got RX packet with 16 bit address
       xbee.getResponse().getRx16Response(rx16);
 
-      char msg[PACKET_SIZE] = ""; // TODO adjust size based on msg length
+      char msg[PACKET_SIZE] = ""; 
       int i;
       // read the whole message
       for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
@@ -217,16 +214,13 @@ int getTime(XBee xbee) {
       if (strstr(msg, "{") && strstr(msg, "}")) {
         Serial.println("valid");
 
+        // this message contains the time
         if (strstr(msg, "time response") != NULL) {
-          // this message contains the time
-
           char * time = extractTime(msg);
           if (time != NULL) {
-            // got the time
             Serial.println("Received current time: ");
             Serial.println(time);
-
-            setTime(time); // TODO verify
+            setSystemTime(time);
             return TRUE;
           }
 
@@ -242,30 +236,31 @@ int getTime(XBee xbee) {
 
 }
 
-char * setTime(char * time) {
-  /* TODO verify
-                      char hr[3];
-                      memcpy(hr, &time[0], 2);
-                      hr[2] = '\0';
-                      char min[3];
-                      memcpy(min, &time[4], 2);
-                      hr[2] = '\0';
-                      char sec[3];
-                      memcpy(sec, &time[8], 2);
-                      sec[2] = '\0';
-                      char day[3];
-                      memcpy(day, &time[11], 2);
-                      day[2] = '\0';
-                      char month[3];
-                      memcpy(month, &time[14], 2);
-                      month[2] = '\0';
-                      char yr[5];
-                      memcpy(yr, &time[17], 4);
-                      yr[4] = '\0';
-                      setTime(hr,min,sec,day,month,yr);
-                      */
-  
-  return NULL;
+/* parse the time and set arduino time */
+int setSystemTime(char * time) {
+
+  char hr[3];
+  memcpy(hr, & time[0], 2);
+  hr[2] = '\0';
+  char minute[3];
+  memcpy(minute, & time[4], 2);
+  hr[2] = '\0';
+  char sec[3];
+  memcpy(sec, & time[8], 2);
+  sec[2] = '\0';
+  char day[3];
+  memcpy(day, & time[11], 2);
+  day[2] = '\0';
+  char month[3];
+  memcpy(month, & time[14], 2);
+  month[2] = '\0';
+  char yr[5];
+  memcpy(yr, & time[17], 4);
+  yr[4] = '\0';
+
+  setTime(atoi(hr), atoi(minute), atoi(sec), atoi(day), atoi(month), atoi(yr));
+
+  return 0;
 
 }
 
