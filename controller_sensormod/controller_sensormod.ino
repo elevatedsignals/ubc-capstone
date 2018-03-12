@@ -21,16 +21,12 @@
 
 int gotTime = FALSE; // dont start unless we set current time
 volatile int commFailureOccured = FALSE;
-
 void setup() {
-  
+
   Serial.begin(9600);
   Serial.println(gotTime);
   XBee xbee = XBee();
   xbee.setSerial(Serial);
-
-  Serial.begin(9600);       // for testing
-  Serial.println("start");  // for testing
     
   pinMode(RX_PIN, INPUT);
   attachInterrupt(1, wakeUpCommunication, LOW); // use interrupt 1 (pin 3) and run function
@@ -49,18 +45,19 @@ void setup() {
   // set default reference voltage (5V)
   analogReference(DEFAULT);
 */
+
   int error;
 
   /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
 
   error = FALSE;
-  float t = get_temp(t_h, &error);
+  float t = get_temp(t_h, & error);
   if (error) {
     Serial.println(ERROR_TEMP);
   }
   error = FALSE;
-  float h = get_humidity(t_h, &error);
+  float h = get_humidity(t_h, & error);
   if (error) {
     Serial.println(ERROR_HUMIDITY);
   }
@@ -73,24 +70,24 @@ void setup() {
 
   /* CO2 code */
   error = FALSE;
-  float co2_volt = get_co2_voltage(&error);
+  float co2_volt = get_co2_voltage( & error);
   if (error) {
     Serial.println(ERROR_GCO2V);
   }
   error = FALSE;
-  float co2_conc = get_co2_concentration(co2_volt, &error);
+  float co2_conc = get_co2_concentration(co2_volt, & error);
   if (error) {
     Serial.println(ERROR_GCO2C);
     co2_conc = -1000;
   }
-  
+
   Serial.print("CO2 Concentration: ");
   Serial.print(co2_conc);
   Serial.println(" ppm");
 
   /* Airflow code */
   error = FALSE;
-  float airflow_MPH = get_wind_speed(&error);
+  float airflow_MPH = get_wind_speed( & error);
   if (error) {
     Serial.println(ERROR_AIRFLOW);
     airflow_MPH = -1000;
@@ -98,162 +95,154 @@ void setup() {
   bool airflow_bool = get_airflow(airflow_MPH);
   if (airflow_bool) {
     Serial.println("Airflow: Yes");
-  }
-  else {
+  } else {
     Serial.println("Airflow: No");
   }
-  
+
   /* TODO PAR SENSOR */
 
-  
   /* XBee Wireless Communication */
-    // TODO format data for xbee like this needs to start with { and end with }
-    char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }"; 
-    error = FALSE;
-    if (sendXbee(msg, xbee)) {
-        // if old data failed to send, try to send now
-        if (commFailureOccured) {
-          /* TODO ERROR RECOVERY */
-          /* 
-            try to send data in SD line by line (over xbee, sendXbee)
-            function should ensure each line was sent,
-             erase the data sucessfully sent
-            keep the data that failed on SD
-            if all success,  commFailureOcurred = FALSE;
-            if any failed, commFailureOccurred = TRUE; */
-        }
-        Serial.println("Msg sent over xbee");
+  // TODO format data for xbee like this needs to start with { and end with }
+  char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }";
+  error = FALSE;
+  if (sendXbee(msg, xbee)) {
+    // if old data failed to send, try to send now
+    if (commFailureOccured) {
+      /* TODO ERROR RECOVERY */
+      /* 
+        try to send data in SD line by line (over xbee, sendXbee)
+        function should ensure each line was sent,
+         erase the data sucessfully sent
+        keep the data that failed on SD
+        if all success,  commFailureOcurred = FALSE;
+        if any failed, commFailureOccurred = TRUE; */
     }
-    else {
-        error = TRUE;
-        commFailureOccured = TRUE;
-        Serial.println("Msg failed to send over xbee, stord on SD.");
-    }
-  
-        
-        /* SD interfacing code */
-        int SDerror = FALSE;
-        struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
+    Serial.println("Msg sent over xbee");
+  } else {
+    error = TRUE;
+    commFailureOccured = TRUE;
+    Serial.println("Msg failed to send over xbee");
+  }
 
-        // writes/reads to SD Card if initialized properly
-        if(!SDerror && error) {
-          Serial.println("Begin writing to SD");
-          write_sd(sd, t, h, co2_conc, airflow_bool, &error);
-        }
-  
-        SDerror = FALSE;
-        read_sd(sd, &SDerror);
-        Serial.println("SD Finished");
-  
+  /* SD interfacing code */
+  int SDerror = FALSE;
+  struct SD_card sd = init_sd(TXT_FILE, & SDerror); // TODO we shouldnt initialize everytime when we refactor this
+
+  // writes/reads to SD Card if initialized properly
+  if (!SDerror && error) {
+    Serial.println("Begin writing to SD");
+    write_sd(sd, t, h, co2_conc, airflow_bool, & error);
+  }
+
+  SDerror = FALSE;
+  read_sd(sd, & SDerror);
+  Serial.println("SD Finished");
+
   /* TODO GO TO SLEEP */
-  
 }
 
 void loop() {
   sleepNow(); 
+
 }
-
-
 
 int sendXbee(char * msg, XBee xbee) {
 
-    // 16-bit addressing: Enter address of remote XBee, typically the coordinator
-    Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t *)msg, strlen(msg));
-    TxStatusResponse txStatus = TxStatusResponse();
+  // 16-bit addressing: Enter address of remote XBee, typically the coordinator
+  Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t * ) msg, strlen(msg));
+  TxStatusResponse txStatus = TxStatusResponse();
 
-    xbee.send(tx);
+  xbee.send(tx);
 
-    // after sending a tx request, we expect a status response
-    // wait up to 2 seconds for the status response
-    if (xbee.readPacket(2000)) {
+  // after sending a tx request, we expect a status response
+  // wait up to 2 seconds for the status response
+  if (xbee.readPacket(2000)) {
 
-        // if a tx request is complete APIidentifier == 0x89
-        if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
-            // get status frame
-            xbee.getResponse().getTxStatusResponse(txStatus);
+    // if a tx request is complete APIidentifier == 0x89
+    if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
+      // get status frame
+      xbee.getResponse().getTxStatusResponse(txStatus);
 
-            // get the delivery status, 6th frame byte == 0
-            if (txStatus.getStatus() == SUCCESS) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
-
+      // get the delivery status, 6th frame byte == 0
+      if (txStatus.getStatus() == SUCCESS) {
+        return TRUE;
+      } else {
+        return FALSE;
+      }
     }
 
-    return FALSE;
+  }
+
+  return FALSE;
 
 }
-
 
 int getTime(XBee xbee) {
   Rx16Response rx16 = Rx16Response();
 
-    char request[PACKET_SIZE] = "";
-    strcpy(request, "{ request time, srcAddr:");
-    strcat(request, SRC_ADDRESS);
-    strcat(request, "}");
+  char request[PACKET_SIZE] = "";
+  strcpy(request, "{ request time, srcAddr:");
+  strcat(request, SRC_ADDRESS);
+  strcat(request, "}");
 
-    // send time request
-    if (!sendXbee(request, xbee)) {
-        Serial.println("BP 2");
-        return FALSE;
-    }
+  // send time request
+  if (!sendXbee(request, xbee)) {
+    Serial.println("BP 2");
+    return FALSE;
+  }
 
-    // wait for response containing timestamp
-    uint8_t data = 0;
+  // wait for response containing timestamp
+  uint8_t data = 0;
 
-    xbee.readPacket(2000); // wait max 2 secs
+  xbee.readPacket(2000); // wait max 2 secs
 
-    if (xbee.getResponse().isAvailable()) {
+  if (xbee.getResponse().isAvailable()) {
 
-        if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
-            // got RX packet with 16 bit address
-            xbee.getResponse().getRx16Response(rx16);
+    if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
+      // got RX packet with 16 bit address
+      xbee.getResponse().getRx16Response(rx16);
 
-            char msg[PACKET_SIZE] = ""; // TODO adjust size based on msg length
-            int i;
-            // read the whole message
-            for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
-                data = rx16.getData(i);
-                msg[i] = data;;
-            }
-            msg[i] = '\0';
+      char msg[PACKET_SIZE] = ""; // TODO adjust size based on msg length
+      int i;
+      // read the whole message
+      for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
+        data = rx16.getData(i);
+        msg[i] = data;;
+      }
+      msg[i] = '\0';
 
-            Serial.println(msg);
+      Serial.println(msg);
 
-            // this is a valid msg to handle
-            if (strstr(msg, "{") && strstr(msg, "}")) {
-                Serial.println("valid");
+      // this is a valid msg to handle
+      if (strstr(msg, "{") && strstr(msg, "}")) {
+        Serial.println("valid");
 
-                if (strstr(msg, "time response") != NULL) {
-                    // this message contains the time
+        if (strstr(msg, "time response") != NULL) {
+          // this message contains the time
 
-                    char *time = extractTime(msg);
-                    if (time != NULL ) {
-                        // got the time
-                        Serial.println("Received current time: ");
-                        Serial.println(time);
-                       
-                      setTime(time); // TODO verify
-                        return TRUE;
-                    }
+          char * time = extractTime(msg);
+          if (time != NULL) {
+            // got the time
+            Serial.println("Received current time: ");
+            Serial.println(time);
 
-                }
-
-            }
-
+            setTime(time); // TODO verify
+            return TRUE;
+          }
 
         }
 
+      }
+
     }
 
-    return FALSE;
+  }
+
+  return FALSE;
 
 }
 
-char* setTime(char *time) {
+char * setTime(char * time) {
   /* TODO verify
                       char hr[3];
                       memcpy(hr, &time[0], 2);
@@ -276,41 +265,45 @@ char* setTime(char *time) {
                       setTime(hr,min,sec,day,month,yr);
                       */
   
+  return NULL;
+
 }
 
-char* extractTime(char *message) {
+char * extractTime(char * message) {
 
-    char msg[PACKET_SIZE];
-    strcpy(msg, message);
+  char msg[PACKET_SIZE];
+  strcpy(msg, message);
 
-    char *time;
-    char *token;
+  char * time;
+  char * token;
 
-    // format should be {time response, current time=<time>}
-    // cant use ':' as timestamp will contain that so wont parse properly
-    if ( strstr(msg, "current time") != NULL ) {
-        token = strtok(msg, "}");
-        token = strstr(token, "=");
-        memmove(token, token+1, strlen(token)-1);
-        time = token;
+  // format should be {time response, current time=<time>}
+  // cant use ':' as timestamp will contain that so wont parse properly
+  if (strstr(msg, "current time") != NULL) {
+    token = strtok(msg, "}");
+    token = strstr(token, "=");
+    memmove(token, token + 1, strlen(token) - 1);
+    time = token;
 
-        return time;
-    }
+    return time;
+  }
 
-    return NULL;
+  return NULL;
 }
 
 /*
-* Purpose: initializes the DHT sensor and polls the sensor till it obtains
-* temperature and humidity data. This needs to be in a .ino file
-* (not c file) as DHT library code is in c++.
-* Output: the TH struct containing all DHT sensor data
-*/
+ * Purpose: initializes the DHT sensor and polls the sensor till it obtains
+ * temperature and humidity data. This needs to be in a .ino file
+ * (not c file) as DHT library code is in c++.
+ * Output: the TH struct containing all DHT sensor data
+ */
 struct TH init_dht(void) {
 
   /* to determine whether a temp and humidity reading was obtained, we
    initialize them to -1000 since those are invalid values */
-  struct TH t_h = {-1000, -1000};
+  struct TH t_h = {-1000,
+    -1000
+  };
   float h;
   float t;
 
@@ -329,7 +322,7 @@ struct TH init_dht(void) {
     // read temperature as Celsius (default)
     t = dht.readTemperature();
     attempt++;
-  } while((isnan(h) || isnan(t)) & attempt < 5);
+  } while ((isnan(h) || isnan(t)) & attempt < 5);
 
   if (!isnan(t)) {
     t_h.t = t;
