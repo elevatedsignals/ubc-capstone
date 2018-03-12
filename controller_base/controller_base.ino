@@ -10,8 +10,6 @@
 // RECEIVER/Base station code
 // XBEE channel = C, pan id = F5D9
 
-#define TRUE 1
-#define FALSE 0
 #define DEST_ADDRESS 0xCE06
 #define PACKET_SIZE 80
 
