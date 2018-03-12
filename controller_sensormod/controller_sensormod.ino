@@ -14,11 +14,8 @@
 // Sensor module/transmitter code
 // XBEE channel = C, pan id = F5D9
 
-#define TRUE 1
-#define FALSE 0
 #define SRC_ADDRESS "0xCE06" // for informational purposes only
 #define DEST_ADDRESS 0xAB7F
-#define PACKET_SIZE 100
 
 int gotTime = FALSE; // dont start unless we set current time
 volatile int commFailureOccured = FALSE;
