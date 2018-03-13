@@ -15,7 +15,7 @@
 
 const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-const char server[] = "www.google.com"; // REPLACE WITH SERVER URL
+const char server[] = "https://dashboard.elevatedsignals.com"; // REPLACE WITH SERVER URL
 const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fails to assign
 
 /*
@@ -48,7 +48,7 @@ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
      Serial.write(c);
    }
 
-   // IF ONLY SINGLE CHARS MAY BE RECEIVED
+   // IF ONLY A SINGLE CHARS IS EXPECTED
    // if(client.available()) {
    //   char c = client.read();
    //   Serial.write(c);
