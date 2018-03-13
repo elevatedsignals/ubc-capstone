@@ -15,8 +15,11 @@
 #define DHTTYPE DHT22
 
 #define TXT_FILE "data.txt"
+#define BASE_TXT_FILE "baseError.txt"
+#define SENSOR_MODULE_TXT_FILE "sensorMod.txt"
 #define EIGHT_HOURS 28800
 #define DELAY_TIME 1000
+#define TX16_REQUEST_MAX_SIZE 109
 
 #define WIND_THRESHOLD 4
 

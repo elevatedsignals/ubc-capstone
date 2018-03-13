@@ -1,19 +1,14 @@
 #include "constants.h"
 #include "DHT.h"
 #include "TH.h"
+#include "XBee.h"
+#include "sendXBee.h"
 #include "SDCard.h"
 #include "CO2.h"
 #include "airflow.h"
-#include "XBee.h"
 
 // Sensor module/transmitter code
 // XBEE channel = C, pan id = F5D9
-
-#define TRUE 1
-#define FALSE 0
-#define SRC_ADDRESS "0xCE06" // for informational purposes only
-#define DEST_ADDRESS 0xAB7F
-#define PACKET_SIZE 100
 
 int gotTime = FALSE; // dont start unless we set current time
 volatile int commFailureOccured = FALSE;
@@ -91,6 +86,10 @@ void setup() {
   
   /* TODO PAR SENSOR */
 
+
+  /* SD interfacing code */
+    int SDerror = FALSE;
+    struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
   
   /* XBee Wireless Communication */
     // TODO format data for xbee like this needs to start with { and end with }
@@ -107,6 +106,7 @@ void setup() {
             keep the data that failed on SD
             if all success,  commFailureOcurred = FALSE;
             if any failed, commFailureOccurred = TRUE; */
+            commFailureOccured = recover_sensor_module_data(sd, xbee);
         }
         Serial.println("Msg sent over xbee");
     }
@@ -114,13 +114,10 @@ void setup() {
         error = TRUE;
         commFailureOccured = TRUE;
         Serial.println("Msg failed to send over xbee, stord on SD.");
+        write_sensor_module_message(sd, msg, &error);
     }
   
         
-        /* SD interfacing code */
-        int SDerror = FALSE;
-        struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
-
         // writes/reads to SD Card if initialized properly
         if(!SDerror && error) {
           Serial.println("Begin writing to SD");
@@ -136,39 +133,6 @@ void setup() {
 }
 
 void loop() {
-}
-
-
-
-int sendXbee(char * msg, XBee xbee) {
-
-    // 16-bit addressing: Enter address of remote XBee, typically the coordinator
-    Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t *)msg, strlen(msg));
-    TxStatusResponse txStatus = TxStatusResponse();
-
-    xbee.send(tx);
-
-    // after sending a tx request, we expect a status response
-    // wait up to 2 seconds for the status response
-    if (xbee.readPacket(2000)) {
-
-        // if a tx request is complete APIidentifier == 0x89
-        if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
-            // get status frame
-            xbee.getResponse().getTxStatusResponse(txStatus);
-
-            // get the delivery status, 6th frame byte == 0
-            if (txStatus.getStatus() == SUCCESS) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
-
-    }
-
-    return FALSE;
-
 }
 
 
