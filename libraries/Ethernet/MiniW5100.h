@@ -66,31 +66,38 @@ char* prepare_payload(String *payload, int cap_id, float val, String *time_strin
     case 58: { // ID_TEMP
       *payload = "{\"capability_id\": 58";
       *payload += ",\"json_value\":{";
-      *payload += "\"temperatureMeasurement\":"+(String)val;
+      *payload += "\"temperature\":"+(String)val;
       break;
     }
-    case 43: { // ID_RHUM
+    case 43: { // ID_HUM
       *payload = "{\"capability_id\": 43";
       *payload += ",\"json_value\":{";
-      *payload += "\"relativeHumidityMeasurement\":"+(String)val;
+      *payload += "\"Humidity\":"+(String)val;
       break;
     }
     case 13: { // ID_CO2
       *payload = "{\"capability_id\": 13";
       *payload += ",\"json_value\":{";
-      *payload += "\"carbonDioxideMeasurement\":"+(String)val;
+      *payload += "\"carbonDioxide\":"+(String)val;
       break;
     }
     case 29: { // ID_PAR
       *payload = "{\"capability_id\": 29";
       *payload += ",\"json_value\":{";
-      *payload += "\"light\":"+(String)val;
+      *payload += "\"value\":"+(String)val;
       break;
     }
     case 1: { // ID_AF
       *payload = "{\"capability_id\": 1";
       *payload += ",\"json_value\":{";
-      *payload += "\"airflowDetectionSensor\":"+(String)val;
+      *payload += "\"state\":";
+
+      if(val == 0.0) {
+        *payload += "\"still\"";
+      } else {
+        *payload += "\"moving\"";
+      }
+
       break;
     }
   }

@@ -10,7 +10,7 @@
 #define DEFAULT_HTTP_PORT 80
 
 #define ID_TEMP 58
-#define ID_RHUM 43
+#define ID_HUM 43
 #define ID_CO2 13
 #define ID_PAR 29
 #define ID_AF 1
