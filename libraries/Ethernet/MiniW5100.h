@@ -130,12 +130,9 @@ EthernetClient make_http_request(EthernetClient client, String payload, int *err
     client.println(HTTP_GET_REQUEST_L1);
     client.println(HTTP_GET_REQUEST_L2);
     client.println(HTTP_GET_REQUEST_L3);
-    client.println(HTTP_GET_REQUEST_L4);
-    client.print(HTTP_GET_REQUEST_L5);
+    client.print(HTTP_GET_REQUEST_L4);
     client.println(payload.length());
-    client.println(HTTP_GET_REQUEST_L6);
-    // client.print("api_key="); //ALTERNATIVE METHOD TO SEND API KEY
-    // client.print(API_KEY); //ALTERNATIVE METHOD TO SEND API KEY
+    client.println(HTTP_GET_REQUEST_L5);
     client.println(payload);
   } else {
     Serial.println("Error: Failed to establish connection with server.");

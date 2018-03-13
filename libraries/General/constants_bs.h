@@ -21,10 +21,9 @@
 
 #define HTTP_GET_REQUEST_L1 "POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.0"
 #define HTTP_GET_REQUEST_L2 "Host: https://dashboard.elevatedsignals.com"
-#define HTTP_GET_REQUEST_L3 "api_key: bd16506f5a4d789465610a8806eec8b2"
-#define HTTP_GET_REQUEST_L4 "Content-Type: application/json"
-#define HTTP_GET_REQUEST_L5 "Content-Length: "
-#define HTTP_GET_REQUEST_L6 ""
+#define HTTP_GET_REQUEST_L3 "Content-Type: application/json"
+#define HTTP_GET_REQUEST_L4 "Content-Length: "
+#define HTTP_GET_REQUEST_L5 ""
 
 #define ERROR_HTTP_REQUEST "Error: Failed to make HTTP request"
 #define ERROR_RECV_BUFFER "Error: Failed to receive any char/s from server"

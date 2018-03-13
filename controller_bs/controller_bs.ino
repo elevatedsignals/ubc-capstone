@@ -8,8 +8,8 @@ void setup() {
   Serial.begin(9600);
   String payload;
   float sensor_value = 50.0; // REPLACE TEST VALUE
-  int capability_id = ID_TEMP;
-  int error = FALSE;
+  int capability_id = ID_TEMP; // REPLACE TEST VALUE
+  int error = FALSE; // REPLACE TEST VALUE
 
   client = init_ethernet(client);
   print_ip();
