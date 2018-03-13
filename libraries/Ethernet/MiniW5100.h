@@ -42,7 +42,7 @@ EthernetClient init_ethernet(EthernetClient client) {
  *  Purpose: Prints any char/s received from the server for debugging purposes
  *          over serial
  */
-EthernetClient check_recv_buffer(EthernetClient client, int *error) {
+EthernetClient print_recv_buffer(EthernetClient client, int *error) {
    while(client.available()) {
      char c = client.read();
      Serial.write(c);
@@ -60,7 +60,16 @@ EthernetClient check_recv_buffer(EthernetClient client, int *error) {
 /*
 *  Purpose: Formats sensor data for upload
 */
-char* prepare_payload(String *payload, int cap_id, float val, String *time_string) {
+char* prepare_payload(String *payload, int cap_id, float val, String *time_string, int *error) {
+  if(payload == NULL || val == NULL || cap_id == NULL) {
+    Serial.println(ERROR_PREP_PAYLOAD);
+    *error = TRUE;
+  }
+
+  if(cap_id != 58 || cap_id != 43 || cap_id != 13 || cap_id != 29 || cap_id != 1) {
+    Serial.println(ERROR_PREP_PAYLOAD);
+    *error = TRUE;
+  }
 
   switch(cap_id) {
     case 58: { // ID_TEMP
@@ -116,13 +125,14 @@ char* prepare_payload(String *payload, int cap_id, float val, String *time_strin
 }
 
  /*
- *  Purpose: Connects to the server and makes a HTTP request to send sensor data
+ *  Purpose: Connects to the server, uploads sensor data, and validates that the
+ *
  */
 EthernetClient make_http_request(EthernetClient client, String payload, int *error) {
   client.stop(); // close any previous connections to free socket
 
   Serial.println("Connecting to google.com on Port 80 (Default).");
-  if (client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
+  if(client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
 
     // Test an HTTP GET request
     // Serial.println("Sending 1st line: \"GET /search?q=arduino HTTP/1.1\"");
@@ -134,32 +144,43 @@ EthernetClient make_http_request(EthernetClient client, String payload, int *err
     // Serial.println("Sending 4th line: \"\"");
     // client.println(); // REPLACE TEST VALUE
 
-    client.println(HTTP_GET_REQUEST_L1);
-    client.println(HTTP_GET_REQUEST_L2);
-    client.println(HTTP_GET_REQUEST_L3);
-    client.print(HTTP_GET_REQUEST_L4);
+    client.println(HTTP_POST_REQUEST_L1);
+    client.println(HTTP_POST_REQUEST_L2);
+    client.println(HTTP_POST_REQUEST_L3);
+    client.print(HTTP_POST_REQUEST_L4);
     client.println(payload.length());
-    client.println(HTTP_GET_REQUEST_L5);
+    client.println(HTTP_POST_REQUEST_L5);
     client.println(payload);
   } else {
-    Serial.println("Error: Failed to establish connection with server.");
+    Serial.println(ERROR_SERVER_DISCONNECTED);
     *error = TRUE;
   }
 
-  return client;
-}
+  delay(RESPONSE_DELAY);
 
-/*
-*  Purpose: Sends a sensor value to the server using an HTTP 1.0 POST request
-*/
-EthernetClient send_to_server(EthernetClient client, String *payload, int cap_id, float val, String time_string, int *error) {
-  if(time_string == NULL) {
-    *payload = prepare_payload(payload, cap_id, val, NULL);
+  while(!client.available());
+
+  char response[HTTP_POST_RESPONSE_1L_MAX_CHARS+1]; // receiving buffer to hold first line of HTTP response
+  int response_i; // index variable for char array
+
+  if(client.available()) {
+    // transfers first line of HTTP POST response into receiving buffer
+    for(response_i = 0; response_i < HTTP_POST_RESPONSE_1L_MAX_CHARS; response_i++) {
+      char c = client.read();
+      Serial.write(c);
+      response[response_i] = c;
+    }
+
+    response[response_i] = "\0";
+
+    if(strcmp(response, HTTP_POST_RESPONSE_SUCCESS) != 0) {
+      Serial.println(ERROR_FAILED_DATA_UPLOAD);
+      *error = TRUE;
+    }
   } else {
-    *payload = prepare_payload(payload, cap_id, val, &time_string);
+    Serial.println(ERROR_SERVER_UNAVAILABLE);
+    *error = TRUE;
   }
-
-  // client = make_http_request(client, *payload, &error); // @TODO: Fix passing of payload and error
 
   return client;
 }
@@ -177,7 +198,7 @@ void print_ip() {
 */
 EthernetClient check_connection(EthernetClient client, int *error) {
   if (!client.connected()) {
-    Serial.println("Error: Disconnected from server. Closing connection.");
+    Serial.println(ERROR_SERVER_DISCONNECTED);
     *error = TRUE;
     client.stop();
   } else {

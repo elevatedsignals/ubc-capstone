@@ -15,14 +15,8 @@ void setup() {
   print_ip();
 
   // successfully-compiled hard code of send_to_server function
-  payload = prepare_payload(&payload, capability_id, sensor_value, NULL);
+  payload = prepare_payload(&payload, capability_id, sensor_value, NULL, &error);
   client = make_http_request(client, payload, &error);
-
-  // @TODO: Fix send_to_server compilation errors
-  // client = send_to_server(client, &payload, capability_id, sensor_value, NULL, &error);
-  if(error) {
-    Serial.println("Error: Failed to send sensor value to server.");
-  }
 
   // // Remove from loop and replace x with appropriate sensor values
   // int i;
