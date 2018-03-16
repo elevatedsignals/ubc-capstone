@@ -22,6 +22,9 @@
 #define ONE_MINUTE 60000000 // 60 seconds
 #define WIND_THRESHOLD 4
 #define PACKET_SIZE 100 // for xbee data
+#define SRC_ADDRESS "0xCE06" // for informational purposes only
+#define DEST_ADDRESS 0xAB7F
+#define TX16_REQUEST_MAX_SIZE 109
 
 #define ERROR_TEMP "Error: DHT Temperature Sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity Sensor"
