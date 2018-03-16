@@ -18,7 +18,6 @@ struct SD_card {
   unsigned long base_station_tail = 0;
   unsigned long sensor_module_head = 0;
   unsigned long sensor_module_tail = 0;
-  
 };
 
 /*
@@ -191,7 +190,6 @@ int write_sensor_module_message(struct SD_card sd, String message, int *error) {
   
   // check that file opened properly
   if(sd.write_file) {
-	  Serial.println("Write it");
 	  sd.write_file.print(unsent_message);
 	  sd.write_file.print("\n");
 	  
@@ -201,7 +199,6 @@ int write_sensor_module_message(struct SD_card sd, String message, int *error) {
   
   else {
 	  // write unsuccessful
-	Serial.println("Cancel can't write");
 	*error = TRUE;
 	sd.write_file.close();
 	return 0;
@@ -209,31 +206,6 @@ int write_sensor_module_message(struct SD_card sd, String message, int *error) {
 
   sd.write_file.close();
   return 1;
-
-	
- }
- 
-  /*
- * Purpose: Deletes the contents of a a given file.
-			
- * Output: true or false
- */
- int truncate_file(struct SD_card sd, String file_name, int *error) {
-	 
-	sd.write_file = SD.open(file_name, FILE_WRITE);
-	
-	if(sd.write_file){
-		Serial.print("Truncating: ");
-		Serial.print(file_name);
-		sd.write_file.truncate(0);
-		sd.write_file.close();
-	}
-	else{
-		*error = 1;
-		Serial.print("Failed to truncate: ");
-		Serial.print(file_name);
-	}
-	
  }
  
  /*
@@ -245,53 +217,65 @@ int write_sensor_module_message(struct SD_card sd, String message, int *error) {
 			
  * Output: true or false
  */
-int recover_sensor_module_data(struct SD_card sd, XBee xbee){
+int recover_sensor_module_data(struct SD_card *sd, XBee xbee){
 	
 	char line[TX16_REQUEST_MAX_SIZE];
-	sd.read_file = SD.open(SENSOR_TXT, FILE_READ);
-	
+	int count = 0;
+	sd->read_file = SD.open(SENSOR_TXT, O_RDWR);
 	// As the file is written to, the head will change position
-	sd.sensor_module_head = sd.read_file.position();
-	
-	if(sd.read_file) {
-		// Read from file until there's nothing else in it
-		while(sd.read_file.available()) {
+	sd->sensor_module_head = sd->read_file.position();
+	sd->read_file.seek(sd->sensor_module_tail);
 
-				// Read Line - DOES TIHS ADVANCE THE FILE POINTER? IF IT DOES WE HAVE A PROBLEM
-				sd.read_file.readStringUntil('\n').toCharArray(line, TX16_REQUEST_MAX_SIZE + 1);
+	
+	if(sd->read_file) {
+		// Read from file until there's nothing else in it
+		while(sd->read_file.available()) {
+
 				
 				
-				//	Attempt to send over xbee				
-				if(sendXbee(line, xbee)){
-					// Commence read so we can advance tail pointer
-					sd.read_file.read();
+				//Peak and grab value_comp
+				
+				// Attempt to send
+				
+				//	Attempt to send over xbee	
+				//REPLACE AFTER TESTING
+				//sendXbee(line, xbee)
+				// For the time being, send 3 values before quitting
+				if((count > 3) == 0){
+					
+					// If read properly, advance the read file.
+					sd->read_file.readStringUntil('\n').toCharArray(line, TX16_REQUEST_MAX_SIZE + 1);
+					count++;
+
 				}				
-				
 				// Otherwise we had an error transmitting; break and return error	
 				else {
-					break;
+					Serial.println("Error transmitting");
+					return 1;
 				}
 				
-				sd.sensor_module_tail = sd.read_file.position();
+				sd->sensor_module_tail = sd->read_file.position();
+
 		
 				// When we run out of data, clear the file
-				if (sd.sensor_module_tail == sd.sensor_module_head)
+				if (sd->sensor_module_tail == sd->sensor_module_head)
 				{
-					sd.read_file.close();
-					sd.write_file = SD.open(BASE_TXT, FILE_WRITE);
-					sd.write_file.truncate(0);
-					//Reset head and tail
-					sd.sensor_module_head = sd.read_file.position();
-					sd.sensor_module_tail = 0;
-					sd.write_file.close();
+					sd->sensor_module_tail = 0;
+					Serial.println("We have reached the end of the file");
+					sd->read_file.close();
+					sd->write_file = SD.open(SENSOR_TXT, FILE_WRITE);
+					sd->write_file.truncate(0);
+					sd->write_file.close();
+					return 0;
 				}		
 			}
 		
 	}
 	else {
 		// read unsuccessful
-		sd.read_file.close();
-		return 0;
+		Serial.println("Didn't open");
+		sd->read_file.close();
+		return 1;
 	}
 	
 	
