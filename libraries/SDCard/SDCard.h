@@ -228,29 +228,28 @@ int recover_sensor_module_data(struct SD_card *sd, XBee xbee){
 		// Read from file until there's nothing else in it
 		while(sd->read_file.available()) {
 
-				
-				
-				//Peak and grab value_comp
-				//	Attempt to send over xbee	
-				//REPLACE AFTER TESTING
-				//sendXbee(line, xbee)
-				// For the time being, send 3 values before quitting
-				if(count < 3){
-					
-					Serial.println("Tail: ");
-					Serial.println(sd->sensor_module_tail);
-					Serial.println("Head: ");
-					Serial.println(sd->sensor_module_head);
+			Serial.println("Tail: ");
+			Serial.println(sd->sensor_module_tail);
+			Serial.println("Head: ");
+			Serial.println(sd->sensor_module_head);
 					
 					
-					// If read properly, advance the read file.
-					sd->read_file.readStringUntil('\n').toCharArray(line, TX16_REQUEST_MAX_SIZE + 1);
+			// Read the next line
+			sd->read_file.readStringUntil('\n').toCharArray(line, TX16_REQUEST_MAX_SIZE + 1);
+			Serial.println("READ:");
+			Serial.println(line);
+			
+			// Use count < n if you want to simulate values being sent in blocks
+				if(sendXbee(line, xbee)){
+					
 					Serial.println("SENT:");
 					Serial.println(line);
-					count++;
+					
+					// If the message is successfully sent, we will advance the pointer
 					sd->sensor_module_tail = sd->read_file.position();
+					count++;
 
-				}				
+				}
 				// Otherwise we had an error transmitting; break and return error	
 				else {
 					Serial.println("Error transmitting");
@@ -259,9 +258,6 @@ int recover_sensor_module_data(struct SD_card *sd, XBee xbee){
 					return 1;
 				}
 				
-				
-
-		
 				// When we run out of data, clear the file
 				if (sd->sensor_module_tail == sd->sensor_module_head)
 				{
@@ -273,8 +269,7 @@ int recover_sensor_module_data(struct SD_card *sd, XBee xbee){
 					sd->write_file.close();
 					return 0;
 				}		
-			}
-		
+		}
 	}
 	else {
 		// read unsuccessful

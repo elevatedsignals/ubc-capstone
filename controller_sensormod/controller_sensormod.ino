@@ -98,15 +98,7 @@ void setup() {
     if (sendXbee(msg, xbee)) {
         // if old data failed to send, try to send now
         if (commFailureOccured) {
-          /* TODO ERROR RECOVERY */
-          /* 
-            try to send data in SD line by line (over xbee, sendXbee)
-            function should ensure each line was sent,
-             erase the data sucessfully sent
-            keep the data that failed on SD
-            if all success,  commFailureOcurred = FALSE;
-            if any failed, commFailureOccurred = TRUE; */
-            commFailureOccured = recover_sensor_module_data(sd, xbee);
+            commFailureOccured = recover_sensor_module_data(&sd, xbee);
         }
         Serial.println("Msg sent over xbee");
     }
