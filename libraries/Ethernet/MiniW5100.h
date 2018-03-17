@@ -131,7 +131,7 @@ char* prepare_payload(String *payload, int cap_id, float val, String *time_strin
 EthernetClient make_http_request(EthernetClient client, String payload, int *error) {
   client.stop(); // close any previous connections to free socket
 
-  Serial.println("Connecting to google.com on Port 80 (Default).");
+  Serial.println(F("Connecting to google.com on Port 80 (Default)."));
   if(client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
 
     // Test an HTTP GET request
@@ -189,7 +189,7 @@ EthernetClient make_http_request(EthernetClient client, String payload, int *err
 *  Purpose: Prints the ethernet module's IP address over serial
 */
 void print_ip() {
-  Serial.print("The Ethernet Module has the following IP address: ");
+  Serial.print(F("The Ethernet Module has the following IP address: "));
   Serial.println(Ethernet.localIP());
 }
 
@@ -202,7 +202,7 @@ EthernetClient check_connection(EthernetClient client, int *error) {
     *error = TRUE;
     client.stop();
   } else {
-    Serial.println("Connection to server maintained.");
+    Serial.println(F("Connection to server maintained."));
   }
 
   return client;
@@ -216,23 +216,23 @@ void validate_ip() {
 
   switch(status) {
     case 0: {
-      Serial.println("IP renewal unnecessary at the moment.");
+      Serial.println(F("IP renewal unnecessary at the moment."));
       break;
     }
     case 1: {
-      Serial.println("IP renewal failed.");
+      Serial.println(F("IP renewal failed."));
       break;
     }
     case 2: {
-      Serial.println("IP renewal successful.");
+      Serial.println(F("IP renewal successful."));
       break;
     }
     case 3: {
-      Serial.println("IP rebinding failed.");
+      Serial.println(F("IP rebinding failed."));
       break;
     }
     case 4: {
-      Serial.println("IP rebinding successful");
+      Serial.println(F("IP rebinding successful"));
       break;
     }
   }

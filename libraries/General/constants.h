@@ -13,6 +13,10 @@
 #define DHTTYPE DHT22
 
 #define TXT_FILE "data.txt"
+#define TX16_REQUEST_MAX_SIZE 109
+#define SRC_ADDRESS "0xCE06" // for informational purposes only
+#define DEST_ADDRESS 0xAB7F
+#define PACKET_SIZE 100 // for xbee data
 
 #define ERROR_TEMP "Error: DHT Temperature sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity sensor"
