@@ -1,31 +1,40 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#if ARDUINO >= 100
+ #include "Arduino.h"
+#else
+ #include "WProgram.h"
+#endif
+
 #define TRUE 1
 #define FALSE 0
 
 #define MODULE_ID 12345
+
+// PIN USAGE
 #define PIN_CO2 A0
 #define PIN_AIRFLOW_TMP A1
 #define PIN_AIRFLOW_RV A2
 #define PIN_DHT 2
 #define PIN_SD 10
 #define PIN_SD_CHECK 9
-#define RX_PIN   3              // pin used for waking up
-
+#define RX_PIN 3
 
 #define DHTTYPE DHT22
 
 #define TXT_FILE "data.txt"
 #define EIGHT_HOURS 28800
 #define DELAY_TIME 1000
-#define ONE_MINUTE 60000000 // 60 seconds
+#define ONE_MINUTE 60000000
 #define WIND_THRESHOLD 4
+
 #define PACKET_SIZE 100 // for xbee data
 #define SRC_ADDRESS "0xCE06" // for informational purposes only
 #define DEST_ADDRESS 0xAB7F
 #define TX16_REQUEST_MAX_SIZE 109
 
+/* ERROR MSGS */
 #define ERROR_TEMP "Error: DHT Temperature Sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity Sensor"
 //#define ERROR_GCO2V "get_co2_voltage error: output outside expected range (400 - 2000)"

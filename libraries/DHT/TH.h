@@ -2,8 +2,7 @@
 #ifndef TH_H
 #define TH_H
 
-#define TRUE 1
-#define FALSE 0
+#include "Constants.h"
 
 /* humidity and temp will be initialized to -1000 to
   detect errors obtaining data as those are invalid values */
@@ -16,11 +15,10 @@ struct TH {
  * Purpose: Gets the temperature data
  * Output: temperature in Celsius
  */
-float get_temp(struct TH t_h, int *error) {
+float get_temp(struct TH t_h, int * error) {
   if (t_h.t != -1000) {
     return t_h.t;
-  }
-  *error = TRUE;
+  } * error = TRUE;
   return -1000;
 }
 
@@ -28,12 +26,11 @@ float get_temp(struct TH t_h, int *error) {
  * Purpose: Gets the humidity data
  * Output: relative humidity percentage
  */
-float get_humidity(struct TH t_h, int *error) {
+float get_humidity(struct TH t_h, int * error) {
   // relative humidity must be 0+
   if (t_h.h >= 0 & t_h.h <= 100) {
     return t_h.h;
-  }
-  *error = TRUE;
+  } * error = TRUE;
   return -1000;
 }
 

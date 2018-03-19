@@ -1,21 +1,21 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
-#include "constants.h"
+#include "Constants.h"
 #include "DHT.h"
 #include "TH.h"
 #include "CO2.h"
-#include "airflow.h"
+#include "Airflow.h"
 #include "XBee.h"
-#include "sendXBee.h"
+#include "SendXBee.h"
 #include "SDCard.h"
 #include "TimerOne.h"
 #include "Polling.h"
 #include "TimeLib.h"
 
-// Sensor module/transmitter code
-// XBEE channel = C, pan id = F5D9
+/* Sensor module/transmitter code */
 
 int gotTime = FALSE; // dont start unless we set current time
+// track whether there is existing data on SD
 volatile int commFailureOccurred = FALSE;
 
 void setup() {
@@ -24,26 +24,26 @@ void setup() {
 
   XBee xbee = XBee();
   xbee.setSerial(Serial);
-    
+
   pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
-  
-  // interrupt 1) on RX line (connected to pin 3) to wake up on xbee communication
-  attachInterrupt(1, wakeUpCommunication, LOW); 
-                                    
+
+  // interrupt 1) wake up on xbee communication
+  attachInterrupt(1, wakeUpCommunication, LOW);
+
   // interrupt 2) timer interrupt on 60 second interval
-  Timer1.initialize(ONE_MINUTE/20); // TODO change to every 10 min
+  Timer1.initialize(ONE_MINUTE / 20); // TODO change to every 10 min
   Timer1.attachInterrupt(wakeUpTimer);
- 
-/*
-  // get current time from base station before starting
-  while (!gotTime) {
-        delay(1000);
-        Serial.println("Waiting for time before starting");
-        gotTime = getTime(xbee);
-    }
-  // set default reference voltage (5V)
-  analogReference(DEFAULT);
-*/
+
+  /* TODO uncomment this
+    // get current time from base station before starting
+    while (!gotTime) {
+          delay(1000);
+          Serial.println("Waiting for time before starting");
+          gotTime = getTime(xbee);
+      }
+    // set default reference voltage (5V)
+    analogReference(DEFAULT);
+  */
 
   int error;
 
@@ -102,49 +102,47 @@ void setup() {
 
   /* SD interfacing code */
   int SDerror = FALSE;
-  struct SD_card sd = init_sd(TXT_FILE, & SDerror); // TODO we shouldnt initialize everytime when we refactor this
+  struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
 
   /* XBee Wireless Communication */
   // TODO format data for xbee like this needs to start with { and end with }
-  char * msg = "{ uniqueid: 123, timestamp: 00:12:14 }";
+  char *msg = "{ uniqueid: 123, timestamp: 00:12:14 }";
   error = FALSE;
-  if (sendXbee(msg, xbee)) {
-    // if old data failed to send, try to send now
+  if (sendXbeeVerify(msg, xbee)) {
+    /* Error recovery */
     if (commFailureOccurred) {
-      // Error recovery code
+      // if old data failed to send, try to send now
       commFailureOccurred = recover_sensor_module_data(&sd, xbee);
     }
     Serial.println("Msg sent over xbee");
   } else {
-    error = TRUE;
     commFailureOccurred = TRUE;
     Serial.println("Msg failed to send over xbee");
-    // Saves msg in the event that transmission fails
-    write_sensor_module_message(sd, msg, &error);
+    // saves msg in the event that transmission fails
+    // and SD card was initialized properly
+    if (!SDerror) {
+      Serial.println("Begin writing to SD");
+      write_sensor_module_message(sd, msg, &error);
+    }
   }
 
-  
-
-  // writes/reads to SD Card if initialized properly
-  if (!SDerror && error) {
-    Serial.println("Begin writing to SD");
-    write_sd(sd, t, h, co2_conc, airflow_bool, & error);
-  }
 
   SDerror = FALSE;
-  read_sd(sd, & SDerror);
-  Serial.println("SD Finished");
-
+  read_sd(sd, &SDerror);
 }
 
 void loop() {
-  
+
   sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
 
   // TODO put main code here
-  
+
 }
 
+/*
+* Purpose: Get current time from base station
+* Output: FALSE if failed to obtain, TRUE otherwise
+*/
 int getTime(XBee xbee) {
   Rx16Response rx16 = Rx16Response();
 
@@ -154,7 +152,7 @@ int getTime(XBee xbee) {
   strcat(request, "}");
 
   // send time request
-  if (!sendXbee(request, xbee)) {
+  if (!sendXbeeVerify(request, xbee)) {
     return FALSE;
   }
 
@@ -168,10 +166,10 @@ int getTime(XBee xbee) {
       // got RX packet with 16 bit address
       xbee.getResponse().getRx16Response(rx16);
 
-      char msg[PACKET_SIZE] = ""; 
+      char msg[PACKET_SIZE] = "";
       int i;
       // read the whole message
-      for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
+      for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE i++) {
         data = rx16.getData(i);
         msg[i] = data;;
       }
@@ -202,10 +200,11 @@ int getTime(XBee xbee) {
   }
 
   return FALSE;
-
 }
 
-/* parse the time and set arduino time */
+/*
+* Purpose: Parse the time receieved and set arduino time
+*/
 int setSystemTime(char * time) {
 
   char hr[3];
@@ -230,9 +229,13 @@ int setSystemTime(char * time) {
   setTime(atoi(hr), atoi(minute), atoi(sec), atoi(day), atoi(month), atoi(yr));
 
   return 0;
-
 }
 
+/*
+* Parse the time from the response
+* Output: the full timestamp, or NULL if msg
+* did not contain a timestamp
+*/
 char * extractTime(char * message) {
 
   char msg[PACKET_SIZE];
