@@ -38,8 +38,6 @@
 /* ERROR MSGS */
 #define ERROR_TEMP "Error: DHT Temperature Sensor"
 #define ERROR_HUMIDITY "Error: DHT Humidity Sensor"
-//#define ERROR_GCO2V "get_co2_voltage error: output outside expected range (400 - 2000)"
-//#define ERROR_GCO2C "get_co2_concentration error: input/output outside expected range (400 - 2000/0 - 5000)"
 #define ERROR_GCO2V "Error: CO2 Sensor Voltage"
 #define ERROR_GCO2C "Error: CO2 Sensor Concentration"
 #define ERROR_PARV "Error: PAR Sensor Voltage"
