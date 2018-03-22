@@ -1,10 +1,11 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
-#include "Constants.h"
+#include "constants.h"
 #include "DHT.h"
 #include "TH.h"
 #include "CO2.h"
-#include "Airflow.h"
+#include "airflow.h"
+#include "PAR.h"
 #include "XBee.h"
 #include "SendXBee.h"
 #include "SDCard.h"
@@ -22,17 +23,19 @@ void setup() {
 
   Serial.begin(9600);
 
+  /* Uncomment
   XBee xbee = XBee();
   xbee.setSerial(Serial);
+  */
 
   pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
 
+  // Uncomment
   // interrupt 1) wake up on xbee communication
-  attachInterrupt(1, wakeUpCommunication, LOW);
-
+  //attachInterrupt(1, wakeUpCommunication, LOW);
   // interrupt 2) timer interrupt on 60 second interval
-  Timer1.initialize(ONE_MINUTE / 20); // TODO change to every 10 min
-  Timer1.attachInterrupt(wakeUpTimer);
+  //Timer1.initialize(ONE_MINUTE / 20); // TODO change to every 10 min
+  //Timer1.attachInterrupt(wakeUpTimer);
 
   /* TODO uncomment this
     // get current time from base station before starting
@@ -46,10 +49,8 @@ void setup() {
   */
 
   int error;
-
   /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
-
   error = FALSE;
   float t = get_temp(t_h, & error);
   if (error) {
@@ -99,6 +100,21 @@ void setup() {
   }
 
   /* TODO PAR SENSOR */
+  error = FALSE;
+  float par_volt = get_par_voltage( & error);
+  if (error) {
+    Serial.println(ERROR_PARV);
+  }
+  error = FALSE;
+  float par_intensity = get_par_concentration(par_volt, & error);
+  if (error) {
+    Serial.println(ERROR_PARI);
+    par_intensity = -1000;
+  }
+
+  Serial.print("PAR Intensity: ");
+  Serial.print(par_intensity);
+  Serial.println(" umol*m^(-2)*s^(-1)");
 
   /* SD interfacing code */
   int SDerror = FALSE;
@@ -108,8 +124,9 @@ void setup() {
   // TODO format data for xbee like this needs to start with { and end with }
   char *msg = "{ uniqueid: 123, timestamp: 00:12:14 }";
   error = FALSE;
+  /* Uncomment
   if (sendXbeeVerify(msg, xbee)) {
-    /* Error recovery */
+    // Error recovery
     if (commFailureOccurred) {
       // if old data failed to send, try to send now
       commFailureOccurred = recover_sensor_module_data(&sd, xbee);
@@ -125,7 +142,7 @@ void setup() {
       write_sensor_module_message(sd, msg, &error);
     }
   }
-
+  */
 
   SDerror = FALSE;
   read_sd(sd, &SDerror);
@@ -169,7 +186,7 @@ int getTime(XBee xbee) {
       char msg[PACKET_SIZE] = "";
       int i;
       // read the whole message
-      for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE i++) {
+      for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE ;i++) {
         data = rx16.getData(i);
         msg[i] = data;;
       }
@@ -277,13 +294,13 @@ struct TH init_dht(void) {
   // initialize DHT sensor
   DHT dht(PIN_DHT, DHTTYPE);
   dht.begin();
-
   int attempt = 0; // track number of poll attempts
 
   // try to poll data for 20 secs max
   do {
     // can only poll every 2 seconds
     delay(500);
+
     // reading temperature or humidity takes about 250 ms
     h = dht.readHumidity();
     // read temperature as Celsius (default)
@@ -297,6 +314,5 @@ struct TH init_dht(void) {
   if (!isnan(h)) {
     t_h.h = h;
   }
-
   return t_h;
 }
