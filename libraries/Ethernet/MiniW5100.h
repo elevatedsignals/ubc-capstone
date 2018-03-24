@@ -66,7 +66,7 @@ char* prepare_payload(String *payload, int cap_id, float val, String *time_strin
     *error = TRUE;
   }
 
-  if(cap_id != 58 || cap_id != 43 || cap_id != 13 || cap_id != 29 || cap_id != 1) {
+  if(cap_id != ID_TEMP && cap_id && ID_HUM && cap_id != ID_CO2 && cap_id != ID_PAR && cap_id != ID_AF) {
     Serial.println(ERROR_PREP_PAYLOAD);
     *error = TRUE;
   }
