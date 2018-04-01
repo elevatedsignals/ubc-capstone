@@ -30,8 +30,8 @@ float get_par_voltage(int * error) {
   }
 
   // analog signal is first calibrated to account for amplifier gain
-  // R = 440, G = 1 + (49.4e3)/R
-  float voltage = sensor_value / (1 + (49400 / 440.0));
+  // R1 = 392k, R2 = 4.3k, G = 1 + R1/R2
+  float voltage = sensor_value / (1 + (392000.0 / 4300.0));
 
   // next, signal is converted to voltage value in millivolts (mV)
   voltage *= (5000 / 1023.0);
