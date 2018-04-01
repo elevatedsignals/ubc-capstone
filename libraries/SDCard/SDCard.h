@@ -38,9 +38,9 @@ struct SD_card init_sd(String data_file, int * error) {
   pinMode(PIN_SD_CHECK, INPUT);
 
   // check if initialization is complete, and that an SD card is inserted
-  if (SD.begin(PIN_SD) && digitalRead(PIN_SD_CHECK)) {
+  if (SD.begin(PIN_SD) && (!digitalRead(PIN_SD_CHECK))) {
     Serial.println("Initialization Succeeded");
-  } else if (!digitalRead(PIN_SD_CHECK)) {
+  } else if (digitalRead(PIN_SD_CHECK)) {
     Serial.println(ERROR_NOSD); * error = TRUE;
   } else {
     Serial.println(ERROR_INITSD); * error = TRUE;
