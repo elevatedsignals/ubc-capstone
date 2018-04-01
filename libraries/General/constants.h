@@ -14,12 +14,12 @@
 
 // PIN USAGE
 #define PIN_CO2 A0
-#define PIN_AIRFLOW_TMP A1
-#define PIN_AIRFLOW_RV A2
-#define PIN_PAR A3
+#define PIN_AIRFLOW_TMP A2
+#define PIN_AIRFLOW_RV A3
+#define PIN_PAR A6
 #define PIN_DHT 2
 #define PIN_SD 10
-#define PIN_SD_CHECK 9
+#define PIN_SD_CHECK 8
 #define RX_PIN 3
 
 #define DHTTYPE DHT22
