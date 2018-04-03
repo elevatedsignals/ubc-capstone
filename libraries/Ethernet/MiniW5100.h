@@ -1,13 +1,8 @@
 #ifndef MINIW5100_H
 #define MINIW5100_H
 
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
 #include "constants_bs.h"
+#include "constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <SPI.h>
@@ -29,7 +24,7 @@ EthernetClient init_ethernet(EthernetClient client) {
   }
 
   client.setTimeout(500);
-  delay(ONE_SEC); // delay for Mini W5100 to start
+  delay(DELAY_TIME); // delay for Mini W5100 to start
 
   return client;
 }
@@ -123,17 +118,14 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
 
   if(client.connect(middleman_server, MIDDLEMAN_PORT) == 1) {
 
-  //  char *data = "{\"capability_id\": 58, \"json_value\": { \"temperature\": 28.0}}";
-  //  Serial.println(data);
-
   client.println(HTTP_L1);
   client.println("Host: ec2-52-202-121-17.compute-1.amazonaws.com");
   client.println("Connection: close");
   client.print("Content-Length: ");
-  client.println(strlen(data));
+  client.println(strlen(payload));
   client.println("Content-Type: application/json");
   client.println();
-  client.println(data);
+  client.println(payload);
 
   } else {
     Serial.println(ERROR_SERVER_DISCONNECTED);
@@ -144,7 +136,7 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
   // wait max 3 seconds for response
   int attempt = 0;
   while(!client.available() && attempt < 4) {
-    delay(ONE_SEC);
+    delay(DELAY_TIME);
     attempt++;
 
     if (attempt == 4) {

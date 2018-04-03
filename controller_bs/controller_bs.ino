@@ -1,4 +1,5 @@
 #include "constants_bs.h"
+#include "constants.h"
 #include "MiniW5100.h"
 #include "SDCard_Base.h"
 
@@ -9,8 +10,9 @@ void setup() {
 
   // TODO change ethernet pin 9 - 10
   Serial.begin(9600);
-  float sensor_value = 1.0; // REPLACE TEST VALUE
-  int capability_id = ID_AF; // REPLACE TEST VALUE
+  // TODO replace with real vals
+  float sensor_value = 1.0;
+  int capability_id = ID_AF;
 
   client = init_ethernet(client);
 
