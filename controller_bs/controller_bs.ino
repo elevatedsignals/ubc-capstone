@@ -1,5 +1,6 @@
 #include "constants_bs.h"
 #include "constants.h"
+#include "Format.h"
 #include "MiniW5100.h"
 #include "SDCard_Base.h"
 
@@ -10,11 +11,11 @@ void setup() {
 
   // TODO change ethernet pin 9 - 10
   Serial.begin(9600);
-  // TODO replace with real vals
-  float sensor_value = 1.0;
-  int capability_id = ID_AF;
+  float sensor_value = 1.0; // REPLACE TEST VALUE
+  int capability_id = ID_AF; // REPLACE TEST VALUE
 
   client = init_ethernet(client);
+
 
  print_ip();
 
@@ -38,8 +39,8 @@ void setup() {
    /* SD interfacing code */
 //   int SDerror = FALSE;
 //   struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
-//
-//
+//  
+//  
 //   // We failed to send and SD initialized
 //   if(error & !SDerror){
 //     write_base_station_message(sd, payload, &SDerror);
@@ -47,12 +48,12 @@ void setup() {
 //   }
 //   // We managed to send and SD initialized
 //   else if(!error & !SDerror){
-//
+//  
 //   // Check for queued messages
 //     if(commFailureOccurred){
 //       commFailureOccurred = recover_base_station_data(&sd, client);
 //     }
-//
+//  
 //   }
 
 
