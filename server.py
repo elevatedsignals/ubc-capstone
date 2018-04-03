@@ -4,6 +4,8 @@
 # Modified by Rosa Mohammadi (2018)
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+import requests
+import json
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -27,6 +29,22 @@ class RequestHandler(BaseHTTPRequestHandler):
         print("\n----- Request Start ----->\n")
         print(client_path)
 
+        print("\n----- Request to Elevated Signals Start ----->\n")
+        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        print (post_data)
+
+        data = json.loads("{\"capability_id\": 58, \"json_value\": { \"temperature\": 28.0}}")
+
+        print (data)
+        r = requests.post("https://dashboard.elevatedsignals.com" + self.path,  params = post_data)
+        print (r.status_code)
+        print (r.headers)
+        print (r.content)
+
+        print("\n----- Request to Elevated Signals End ----->\n")
+
+
         # use same headers for client server
 
         # modify content length
@@ -34,6 +52,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         # from payload formatting parse API key
 
         # send to server path with api key endpoint, without API key
+
+        # get success from Server
+
 
         # get success from Server
 
