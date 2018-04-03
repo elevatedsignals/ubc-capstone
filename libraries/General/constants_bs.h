@@ -8,10 +8,9 @@
 #define PIN_SD_CHECK 9
 
 #define MODULE_ID 12345
-#define DEFAULT_HTTPS_PORT 443
+#define MIDDLEMAN_PORT 8080
 
-#define INIT_ETHERNET_DELAY 1000
-#define RESPONSE_DELAY 1000
+#define ONE_SEC 1000
 
 #define ID_TEMP 58
 #define ID_HUM 43
@@ -19,15 +18,8 @@
 #define ID_PAR 29
 #define ID_AF 1
 
-// TODO API key - do not upload this to github - insecure
-#define HTTP_POST_REQUEST_L1 "POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.0"
-#define HTTP_POST_REQUEST_L2 "Host: https://dashboard.elevatedsignals.com"
-#define HTTP_POST_REQUEST_L3 "Content-Type: application/json"
-#define HTTP_POST_REQUEST_L4 "Content-Length: "
-#define HTTP_POST_REQUEST_L5 "" // blank line needed
-
+#define HTTP_L1 "POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.1" // TODO dont post api key in public place
 #define HTTP_STATUS_LEN 12 // maximum number of chars to read from first line of HTTP POST response
-#define HTTP_RESPONSE_SUCCESS "HTTP/1.1 200"
 #define TXT_FILE "data.txt"
 #define TX16_REQUEST_MAX_SIZE 30
 
