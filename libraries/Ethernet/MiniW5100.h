@@ -15,7 +15,9 @@
 
 const unsigned long interval = 10L * 1000L; // delay between sending sensor data (milliseconds)
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-const char server[] = "https://dashboard.elevatedsignals.com"; // REPLACE WITH SERVER URL
+// note that 'http/https' part of url is NOT used
+const char server[] = "dashboard.elevatedsignals.com";
+//const char server[] = "ec2-52-202-121-17.compute-1.amazonaws.com";
 const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fails to assign
 
 /*
@@ -39,147 +41,166 @@ EthernetClient init_ethernet(EthernetClient client) {
 }
 
 /*
- *  Purpose: Prints any char/s received from the server for debugging purposes
- *          over serial
- */
-EthernetClient print_recv_buffer(EthernetClient client, int *error) {
-   while(client.available()) {
-     char c = client.read();
-     Serial.write(c);
-   }
-
-   // IF ONLY A SINGLE CHARS IS EXPECTED
-   // if(client.available()) {
-   //   char c = client.read();
-   //   Serial.write(c);
-   // }
-
-   return client;
-}
-
-/*
 *  Purpose: Formats sensor data for upload
 */
-char* prepare_payload(String *payload, int cap_id, float val, String *time_string, int *error) {
-  if(payload == NULL || val == NULL || cap_id == NULL) {
+char* prepare_payload(int cap_id, float val, char *time_string, int *error) {
+  if(cap_id == NULL) {
     Serial.println(ERROR_PREP_PAYLOAD);
     *error = TRUE;
+    return NULL;
   }
 
-  if(cap_id != ID_TEMP && cap_id && ID_HUM && cap_id != ID_CO2 && cap_id != ID_PAR && cap_id != ID_AF) {
-    Serial.println(ERROR_PREP_PAYLOAD);
-    *error = TRUE;
-  }
+  char payload[100] = "";
 
   switch(cap_id) {
     case 58: { // ID_TEMP
-      *payload = "{\"capability_id\": 58";
-      *payload += ",\"json_value\":{";
-      *payload += "\"temperature\":"+(String)val;
+      char array[6];
+      dtostrf(val, 1, 1, array);
+      strcpy(payload, "{\"capability_id\": 58,\"json_value\":{\"temperature\":");
+      strcat(payload, array);
+      strcat(payload, "}");
       break;
     }
+
     case 43: { // ID_HUM
-      *payload = "{\"capability_id\": 43";
-      *payload += ",\"json_value\":{";
-      *payload += "\"Humidity\":"+(String)val;
+      char array[6];
+      dtostrf(val, 1, 1, array);
+      strcpy(payload, "{\"capability_id\": 43,\"json_value\":{\"humidity\":");
+      strcat(payload, array);
+      strcat(payload, "}");
       break;
     }
+
     case 13: { // ID_CO2
-      *payload = "{\"capability_id\": 13";
-      *payload += ",\"json_value\":{";
-      *payload += "\"carbonDioxide\":"+(String)val;
+      char array[6];
+      dtostrf(val, 1, 1, array);
+      strcpy(payload, "{\"capability_id\": 13,\"json_value\":{\"carbonDioxide\":");
+      strcat(payload, array);
+      strcat(payload, "}");
       break;
     }
+
     case 29: { // ID_PAR
-      *payload = "{\"capability_id\": 29";
-      *payload += ",\"json_value\":{";
-      *payload += "\"value\":"+(String)val;
+      char array[6];
+      dtostrf(val, 1, 1, array);
+      strcpy(payload, "{\"capability_id\": 29,\"json_value\":{\"value\":");
+      strcat(payload, array);
+      strcat(payload, "}");
       break;
     }
     case 1: { // ID_AF
-      *payload = "{\"capability_id\": 1";
-      *payload += ",\"json_value\":{";
-      *payload += "\"state\":";
+      strcpy(payload, "{\"capability_id\": 1,\"json_value\":{\"state\":");
 
       if(val == 0.0) {
-        *payload += "\"still\"";
+        char *array = "\"still\"";
+        strcat(payload, array);
       } else {
-        *payload += "\"moving\"";
+        char *array = "\"moving\"";
+        strcat(payload, array);
       }
 
+      strcat(payload, "}");
       break;
+    }
+    default: {
+      Serial.println(ERROR_PREP_PAYLOAD);
+      *error = TRUE;
+      return NULL;
     }
   }
 
-  *payload += "}";
 
   if(time_string != NULL) {
-    *payload += "\"timestamp\": \"";
-    *payload += *time_string;
-    *payload += "\"";
+    strcat(payload, "\"timestamp\": \"");
+    strcat(payload, time_string);
+    strcat(payload, "\"");
   }
 
-  *payload += "}";
+  strcat(payload, "}");
 
-  return (char *)payload;
+  return payload;
 }
 
  /*
  *  Purpose: Connects to the server, uploads sensor data, and validates that the
  *
  */
-EthernetClient make_http_request(EthernetClient client, String payload, int *error) {
+EthernetClient make_http_request(EthernetClient client, char* payload, int *error) {
   client.stop(); // close any previous connections to free socket
 
-  Serial.println(F("Connecting to google.com on Port 80 (Default)."));
-  if(client.connect(server, DEFAULT_HTTP_PORT)) { // REPLACE TEST VALUE
+  if(client.connect("ec2-52-202-121-17.compute-1.amazonaws.com", 8080) == 1) {
 
-    // Test an HTTP GET request
-    // Serial.println("Sending 1st line: \"GET /search?q=arduino HTTP/1.1\"");
-    // client.println("GET /search?q=arduino HTTP/1.1"); // REPLACE TEST VALUE
-    // Serial.println("Sending 2nd line: \"Host: www.google.com\"");
-    // client.println("Host: www.google.com"); // REPLACE TEST VALUE
-    // Serial.println("Sending 3rd line: \"Connection: close\"");
-    // client.println("Connection: close"); // REPLACE TEST VALUE
-    // Serial.println("Sending 4th line: \"\"");
-    // client.println(); // REPLACE TEST VALUE
 
+    char *data = "{\"capability_id\": 58, \"json_value\": { \"temperature\": 28.0}}";
+    Serial.println(data);
+
+/*
+    client.println("GET / HTTP/1.1");
+    client.println("Host: dashboard.elevatedsignals.com");
+    client.println("Connection: close");
+    client.println();*/
+
+  client.println("POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.1");
+  client.println("Host: ec2-52-202-121-17.compute-1.amazonaws.com");
+  client.println("Connection: close");
+  client.print("Content-Length: ");
+  client.println(strlen(data));
+  client.println("Content-Type: application/json");
+  client.println();
+  client.println(data);
+
+/*
     client.println(HTTP_POST_REQUEST_L1);
     client.println(HTTP_POST_REQUEST_L2);
+    client.println("User-Agent: Arduino/1.0");
+    client.println("Connection: close");
     client.println(HTTP_POST_REQUEST_L3);
     client.print(HTTP_POST_REQUEST_L4);
-    client.println(payload.length());
-    client.println(HTTP_POST_REQUEST_L5);
-    client.println(payload);
+    client.println(strlen(data));
+    client.println();
+    client.println(data);*/
   } else {
     Serial.println(ERROR_SERVER_DISCONNECTED);
     *error = TRUE;
+    return client;
   }
 
   delay(RESPONSE_DELAY);
 
-  while(!client.available());
+  // wait max 3 seconds for response
+  int attempt = 0;
+  while(!client.available() && attempt < 4) {
+    delay(RESPONSE_DELAY);
+    attempt++;
 
-  char response[HTTP_POST_RESPONSE_1L_MAX_CHARS+1]; // receiving buffer to hold first line of HTTP response
-  int response_i; // index variable for char array
-
-  if(client.available()) {
-    // transfers first line of HTTP POST response into receiving buffer
-    for(response_i = 0; response_i < HTTP_POST_RESPONSE_1L_MAX_CHARS; response_i++) {
-      char c = client.read();
-      Serial.write(c);
-      response[response_i] = c;
-    }
-
-    response[response_i] = "\0";
-
-    if(strcmp(response, HTTP_POST_RESPONSE_SUCCESS) != 0) {
-      Serial.println(ERROR_FAILED_DATA_UPLOAD);
+    if (attempt == 4) {
       *error = TRUE;
+      Serial.println(ERROR_NO_RESPONSE);
+      return client;
     }
-  } else {
-    Serial.println(ERROR_SERVER_UNAVAILABLE);
+  }
+
+
+/*
+  // read response
+  char response[HTTP_STATUS_LEN+1];
+  int i;
+  for (i = 0; i < HTTP_STATUS_LEN; i++) {
+    char c = client.read();
+    Serial.print(c);
+    response[i] = c;
+  }
+  response[i] = '\0';
+
+  // check if response is successful
+  if (strstr(response, HTTP_RESPONSE_SUCCESS) == NULL) {
+    Serial.println(ERROR_FAILED_DATA_UPLOAD);
     *error = TRUE;
+  }*/
+
+  while(client.available()) {
+    char c = client.read();
+    Serial.print(c);
   }
 
   return client;
