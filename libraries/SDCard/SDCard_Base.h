@@ -2,9 +2,7 @@
 #define SDCARD_H
 
 #include "SD.h"
-#define ERROR_VALUE -1000
-#define SENSOR_TXT "Sensor.txt"
-#define BASE_TXT "Base.txt"
+#include "constants_bs.h"
 
 struct SD_card {
   String data_file; // file name to be written to and read from
@@ -31,13 +29,13 @@ struct SD_card {
    // (10 on most Arduino boards, 53 on the Mega) must be left as an output
    // or the SD library functions will not work.
    pinMode(PIN_SD, OUTPUT);
-   pinMode(PIN_SD_CHECK, INPUT);
+   pinMode(PIN_SD_BASE_CHECK, INPUT);
 
    // check if initialization is complete, and that an SD card is inserted
-   if (SD.begin(PIN_SD) && digitalRead(PIN_SD_CHECK)) {
+   if (SD.begin(PIN_SD) && digitalRead(PIN_SD_BASE_CHECK)) {
     Serial.println(F("Initialization Succeeded"));
    }
-   else if(!digitalRead(PIN_SD_CHECK)) {
+   else if(!digitalRead(PIN_SD_BASE_CHECK)) {
      Serial.println(ERROR_NOSD);
      *error = TRUE;
     }

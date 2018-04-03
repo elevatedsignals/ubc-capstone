@@ -2,7 +2,7 @@
 #define CONSTANTS_BS_H
 
 #define PIN_SD 10
-#define PIN_SD_CHECK 9
+#define PIN_SD_BASE_CHECK 9
 
 #define MIDDLEMAN_PORT 8080
 
@@ -15,5 +15,10 @@
 #define ERROR_NOSD "Error: No SD Card Inserted"
 #define ERROR_INITSD "Error: Failed to initialize SD Card"
 #define ERROR_NO_RESPONSE "Error: No response from server."
+
+// error recovery
+#define ERROR_VALUE -1000
+#define SENSOR_TXT "Sensor.txt"
+#define BASE_TXT "Base.txt"
 
 #endif
