@@ -23,10 +23,19 @@
 
 #define DHTTYPE DHT22
 
+// Capability ID's
+#define ID_TEMP 58
+#define ID_HUM 43
+#define ID_CO2 13
+#define ID_PAR 29
+#define ID_AF 1
+
 #define TXT_FILE "data.txt"
+
 #define EIGHT_HOURS 28800
 #define DELAY_TIME 1000
 #define ONE_MINUTE 60000000
+
 #define WIND_THRESHOLD 4
 
 #define PACKET_SIZE 100 // for xbee data

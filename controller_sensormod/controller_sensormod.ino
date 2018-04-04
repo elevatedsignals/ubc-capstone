@@ -1,6 +1,6 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
-#include "Constants.h"
+#include "constants.h"
 #include "DHT.h"
 #include "TH.h"
 #include "CO2.h"
@@ -11,12 +11,14 @@
 #include "TimerOne.h"
 #include "Polling.h"
 #include "TimeLib.h"
+#include "Format.h"
 
 /* Sensor module/transmitter code */
 
 int gotTime = FALSE; // dont start unless we set current time
 // track whether there is existing data on SD
 volatile int commFailureOccurred = FALSE;
+int SDerror = FALSE;
 
 void setup() {
 
@@ -45,6 +47,10 @@ void setup() {
     analogReference(DEFAULT);
   */
 
+  /* SD interfacing code */
+
+  struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
+
   int error;
 
   /* DHT temperature and humidity code */
@@ -55,10 +61,19 @@ void setup() {
   if (error) {
     Serial.println(ERROR_TEMP);
   }
+  else {
+    // TODO pass in time rather than NULL
+    char *payload = prepare_payload(ID_TEMP, t, NULL);
+    sendtoBase(payload, xbee, sd);
+  }
   error = FALSE;
   float h = get_humidity(t_h, & error);
   if (error) {
     Serial.println(ERROR_HUMIDITY);
+  }
+  else {
+    char *payload = prepare_payload(ID_HUM, h, NULL);
+    sendtoBase(payload, xbee, sd);
   }
 
   Serial.print("Temperature: ");
@@ -79,6 +94,10 @@ void setup() {
     Serial.println(ERROR_GCO2C);
     co2_conc = -1000;
   }
+  else {
+    char *payload = prepare_payload(ID_CO2, co2_conc, NULL);
+    sendtoBase(payload, xbee, sd);
+  }
 
   Serial.print("CO2 Concentration: ");
   Serial.print(co2_conc);
@@ -91,23 +110,34 @@ void setup() {
     Serial.println(ERROR_AIRFLOW);
     airflow_MPH = -1000;
   }
-  bool airflow_bool = get_airflow(airflow_MPH);
-  if (airflow_bool) {
-    Serial.println("Airflow: Yes");
-  } else {
-    Serial.println("Airflow: No");
+  else {
+    bool airflow_bool = get_airflow(airflow_MPH);
+    if (airflow_bool) {
+      Serial.println("Airflow: Yes");
+    } else {
+      Serial.println("Airflow: No");
+    }
+
+    char *payload = prepare_payload(ID_AF,airflow_bool, NULL);
+    sendtoBase(payload, xbee, sd);
   }
 
   /* TODO PAR SENSOR */
 
-  /* SD interfacing code */
-  int SDerror = FALSE;
-  struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
+  read_sd(sd, &error); // TODO remove after demo
+}
 
-  /* XBee Wireless Communication */
-  // TODO format data for xbee like this needs to start with { and end with }
-  char *msg = "{ uniqueid: 123, timestamp: 00:12:14 }";
-  error = FALSE;
+void loop() {
+
+  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
+
+  // TODO put main code here
+
+}
+
+void sendtoBase(char *msg, XBee xbee, SD_card sd) {
+
+  int error = FALSE;
   if (sendXbeeVerify(msg, xbee)) {
     /* Error recovery */
     if (commFailureOccurred) {
@@ -125,17 +155,6 @@ void setup() {
       write_sensor_module_message(sd, msg, &error);
     }
   }
-
-
-  SDerror = FALSE;
-  read_sd(sd, &SDerror);
-}
-
-void loop() {
-
-  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
-
-  // TODO put main code here
 
 }
 
@@ -169,9 +188,9 @@ int getTime(XBee xbee) {
       char msg[PACKET_SIZE] = "";
       int i;
       // read the whole message
-      for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE i++) {
+      for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE; i++) {
         data = rx16.getData(i);
-        msg[i] = data;;
+        msg[i] = data;
       }
       msg[i] = '\0';
 

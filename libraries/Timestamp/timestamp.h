@@ -1,20 +1,14 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-#include "Constants.h"
+#include "constants.h"
+#include "constants_bs.h"
 
 /* Enter a MAC address for your controller below.
   * Newer Ethernet shields have a MAC address
   * printed on a sticker on the shield
 */
-byte mac[] = {
-  0xDE,
-  0xAD,
-  0xBE,
-  0xEF,
-  0xFE,
-  0xED
-};
+const byte macUDP[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
 unsigned int localPort = 8888; // local port to listen for UDP packets
 char timeServer[] = "time.nist.gov"; // time.nist.gov NTP server
@@ -45,14 +39,18 @@ void send_NTP_packet(char * address) {
   Udp.beginPacket(address, 123); //NTP requests are to port 123
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   Udp.endPacket();
+
+    delay(DELAY_TIME);
 }
 
 /*
  * Purpose: Initializes Ethernet and UDP
  */
 void initialize_UDP() {
-  // start Ethernet and UDP
-  if (Ethernet.begin(mac) == 0) {
+
+  Ethernet.select(ETHERNET_PIN);
+
+  if (Ethernet.begin(macUDP) == 0) {
     Serial.println(ERROR_INITUDP);
     return;
   }
@@ -80,7 +78,7 @@ unsigned long parse_NTP_packet() {
 
     // now convert NTP time into everyday time:
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800 UL;
+    const unsigned long seventyYears = 2208988800UL;
     // subtract seventy years:
     unsigned long epoch = secsSince1900 - seventyYears - EIGHT_HOURS;
 
@@ -89,7 +87,7 @@ unsigned long parse_NTP_packet() {
 }
 
 /*
- * Purpose: Formats current time into a string: YYYY-MM--DD HH::MM::SS 
+ * Purpose: Formats current time into a string: YYYY-MM--DD HH::MM::SS
  * Output: clockTime, contains time in YYYY-MM--DD HH::MM::SS (24-hour format)
  */
 String get_formatted_time() {
