@@ -8,6 +8,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
+	print ("\nPOST request to:\n")
         print (self.path)
 
         print("\n----- Request to Elevated Signals Start ----->\n")
@@ -18,14 +19,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         r = requests.post("https://dashboard.elevatedsignals.com" + self.path,  params = post_data)
         print (r.status_code)
-        print (r.headers)
         print (r.content)
 
         print("\n----- Request to Elevated Signals End ----->\n")
 
         # respond back to client with success/fail
         self.send_response(r.status_code)
-
 
 def main():
     # listen on port 8080 (no ssl) for arduino client
@@ -37,3 +36,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -3,7 +3,6 @@
 
 #include "constants_bs.h"
 #include "constants.h"
-#include <SPI.h>
 #include <Ethernet.h>
 
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -15,6 +14,8 @@ const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fa
 *  Purpose: Initializes the ethernet connection to the server for logging sensor data
 */
 EthernetClient init_ethernet(EthernetClient client) {
+
+  Ethernet.select(9);
 
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to obtain an IP address using DHCP. Attempting to set IP address manually.");
@@ -74,7 +75,7 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
   response[i] = '\0';
 
   // check if response is successful
-  if (strstr(response, "200") == NULL) {
+  if (strstr(response, HTTP_SUCCESS) == NULL) {
     Serial.println(ERROR_FAILED_DATA_UPLOAD);
     *error = TRUE;
   }
@@ -86,7 +87,7 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
 *  Purpose: Prints the ethernet module's IP address over serial
 */
 void print_ip() {
-  Serial.print(F("The Ethernet Module has the following IP address: "));
+  Serial.print(F("IP Address: "));
   Serial.println(Ethernet.localIP());
 }
 
