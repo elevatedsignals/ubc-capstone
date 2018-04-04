@@ -10,6 +10,8 @@
 #define HTTP_STATUS_LEN 12 // size of http response including status
 #define HTTP_SUCCESS "200"
 
+#define ETHERNET_PIN 9
+
 #define ERROR_SERVER_DISCONNECTED "Error: Server connection failed."
 #define ERROR_FAILED_DATA_UPLOAD "Error: Server did not receive data successfully."
 #define ERROR_PREP_PAYLOAD "Error: Failed to properly format sensor data for upload."

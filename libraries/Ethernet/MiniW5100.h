@@ -15,7 +15,7 @@ const IPAddress ip(192, 168, 0, 177); // static IP address to use if the DHCP fa
 */
 EthernetClient init_ethernet(EthernetClient client) {
 
-  Ethernet.select(9);
+  Ethernet.select(ETHERNET_PIN);
 
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to obtain an IP address using DHCP. Attempting to set IP address manually.");

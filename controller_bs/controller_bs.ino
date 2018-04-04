@@ -4,12 +4,34 @@
 #include "MiniW5100.h"
 #include "SDCard_Base.h"
 
-EthernetClient client; // struct for functions that manipulate communication with server
-volatile int commFailureOccurred = FALSE;
+#include <TimeLib.h>
+#include <EthernetUdp.h>
+#include "Timestamp.h"
+
+
+EthernetClient client;
+// track whether data has queued in SD storage
+//volatile int commFailureOccurred = FALSE;
 
 void setup() {
 
   Serial.begin(9600);
+
+/*
+  // get time from NTP server over UDP
+client = init_ethernet(client);
+initialize_UDP();
+send_NTP_packet(timeServer);
+// set the time accounting for delay
+setTime(parse_NTP_packet() + ((DELAY_TIME) / 1000));
+String clockTime = get_formatted_time();
+char *timestamp = const_cast < char * > (clockTime.c_str());
+
+Serial.println(timestamp);
+*/
+
+
+
   float sensor_value = 58.0; // REPLACE TEST VALUE
   int capability_id = ID_HUM; // REPLACE TEST VALUE
 
