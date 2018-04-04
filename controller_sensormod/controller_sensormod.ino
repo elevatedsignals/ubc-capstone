@@ -16,15 +16,15 @@
 /* Sensor module/transmitter code */
 
 int gotTime = FALSE; // dont start unless we set current time
+int SDerror = FALSE;// track whether SD is avail
+struct SD_card sd;
 // track whether there is existing data on SD
 volatile int commFailureOccurred = FALSE;
-int SDerror = FALSE;
+XBee xbee = XBee();
 
 void setup() {
 
   Serial.begin(9600);
-
-  XBee xbee = XBee();
   xbee.setSerial(Serial);
 
   pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
@@ -49,8 +49,14 @@ void setup() {
 
   /* SD interfacing code */
 
-  struct SD_card sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
+  sd = init_sd(TXT_FILE, &SDerror); // TODO we shouldnt initialize everytime when we refactor this
 
+}
+
+void loop() {
+
+  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
+  
   int error;
 
   /* DHT temperature and humidity code */
@@ -64,7 +70,7 @@ void setup() {
   else {
     // TODO pass in time rather than NULL
     char *payload = prepare_payload(ID_TEMP, t, NULL);
-    sendtoBase(payload, xbee, sd);
+    sendtoBase(payload, xbee);
   }
   error = FALSE;
   float h = get_humidity(t_h, & error);
@@ -73,7 +79,7 @@ void setup() {
   }
   else {
     char *payload = prepare_payload(ID_HUM, h, NULL);
-    sendtoBase(payload, xbee, sd);
+    sendtoBase(payload, xbee);
   }
 
   Serial.print("Temperature: ");
@@ -96,7 +102,7 @@ void setup() {
   }
   else {
     char *payload = prepare_payload(ID_CO2, co2_conc, NULL);
-    sendtoBase(payload, xbee, sd);
+    sendtoBase(payload, xbee);
   }
 
   Serial.print("CO2 Concentration: ");
@@ -119,23 +125,19 @@ void setup() {
     }
 
     char *payload = prepare_payload(ID_AF,airflow_bool, NULL);
-    sendtoBase(payload, xbee, sd);
+    sendtoBase(payload, xbee);
   }
 
   /* TODO PAR SENSOR */
 
   read_sd(sd, &error); // TODO remove after demo
-}
-
-void loop() {
-
-  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
-
-  // TODO put main code here
 
 }
 
-void sendtoBase(char *msg, XBee xbee, SD_card sd) {
+
+/* Helper Functions */
+
+void sendtoBase(char *msg, XBee xbee) {
 
   int error = FALSE;
   if (sendXbeeVerify(msg, xbee)) {
