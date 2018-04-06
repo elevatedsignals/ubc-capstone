@@ -7,7 +7,7 @@
  *  Purpose: Polls the airflow Sensor till it obtains a wind speed reading (in MPH)
  *  Output: A float containing the wind speed (MPH)
  */
-float get_wind_speed(int8_t * error) {
+float get_wind_speed(bool * error) {
   const float zeroWindAdjustment = .2; // negative numbers yield smaller wind speeds and vice versa.
 
   int TMP_Therm_ADunits; //temp termistor value from wind sensor

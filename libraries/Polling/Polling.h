@@ -22,7 +22,7 @@ void wakeUpTimer() {
 */
 void sleepNow() {
     delay(DELAY_TIME); // ensure the last command is complete before entering sleep mode
-pinMode(RX_PIN, INPUT);
+
     Serial.println();
     Serial.println(F("Interrupt: Entering sleep mode"));
     Serial.println();

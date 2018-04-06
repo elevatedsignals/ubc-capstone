@@ -80,7 +80,7 @@ unsigned long parse_NTP_packet() {
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
     const unsigned long seventyYears = 2208988800UL;
     // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears - EIGHT_HOURS;
+    unsigned long epoch = secsSince1900 - seventyYears;
 
     return epoch;
   }

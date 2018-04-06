@@ -1,4 +1,4 @@
-int8_t #ifndef SDCARD_H
+#ifndef SDCARD_H
 #define SDCARD_H
 
 #include "SD.h"
@@ -18,7 +18,7 @@ struct SD_card {
  * Purpose: Initialize the SD card and allows for reading and writing
  * Output: N/A
  */
- struct SD_card init_sd(char* data_file, int8_t *error) {
+ struct SD_card init_sd(char* data_file, bool *error) {
 
    struct SD_card sd;
    sd.data_file = data_file;
@@ -51,7 +51,7 @@ struct SD_card {
  * Purpose: Writes base station message to SD Card in the event of an error in transmitting to web server. Increments head pointer.
  * Output: true or false
  */
- int8_t write_base_station_message(struct SD_card sd, char* unsent_message, int8_t *error){
+ int8_t write_base_station_message(struct SD_card sd, char* unsent_message, bool *error){
 
   // open error file for writing
   sd.write_file = SD.open(BASE_TXT, FILE_WRITE);
@@ -124,7 +124,7 @@ int8_t recover_base_station_data(struct SD_card *sd, EthernetClient client){
 					sd->write_file = SD.open(BASE_TXT, FILE_WRITE);
 					sd->write_file.truncate(0);
 					sd->write_file.close();
-          Serial.println(F("SD card: Sent all queued data."))
+          Serial.println(F("SD card: Sent all queued data."));
 					return 0;
 				}
 		}

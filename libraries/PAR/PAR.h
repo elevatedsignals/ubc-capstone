@@ -19,7 +19,7 @@
  *           (mV)
  *  Output: A float containing the PAR sensor voltage (mV)
  */
-float get_par_voltage(int8_t *error) {
+float get_par_voltage(bool *error) {
   int sensor_value;
 
   int8_t attempt = 0; // track number of poll attempts
@@ -41,7 +41,7 @@ float get_par_voltage(int8_t *error) {
 
   // analog signal is first calibrated to account for amplifier gain
   // R = 440, G = 1 + (49.4e3)/R
-  float voltage = sensor_value / (1 + (49400 / 440.0));
+  float voltage = sensor_value / (1 + (392000.0 / 4300.0));
 
   // next, signal is converted to voltage value in millivolts (mV)
   voltage *= (5000 / 1023.0);
@@ -62,7 +62,7 @@ float get_par_voltage(int8_t *error) {
  *  Input: A float containing the PAR sensor voltage (mV)
  *  Output: A float containing the light intensity (umol*m^(-2)*s^(-1)))
  */
-float get_par_concentration(float voltage, int8_t *error) {
+float get_par_concentration(float voltage, bool *error) {
   // check for invalid input
   if(voltage < 0 || voltage > 40) {
     *error = TRUE;

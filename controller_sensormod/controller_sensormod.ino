@@ -8,7 +8,7 @@
 #include "PAR.h"
 #include "XBee.h"
 #include "SendXBee.h"
-//#include "SDCard.h"
+#include "SDCard.h"
 #include "TimerOne.h"
 #include "Polling.h"
 #include "TimeLib.h"
@@ -16,11 +16,11 @@
 
 /* Sensor module/transmitter code */
 
-int8_t gotTime = FALSE; // dont start unless we set current time
-int8_t SDerror = FALSE;// track whether SD is avail
-//struct SD_card sd;
+bool gotTime = FALSE; // dont start unless we set current time
+bool SDerror = FALSE;// track whether SD is avail
+struct SD_card sd;
 // track whether there is existing data on SD
-volatile int8_t commFailureOccurred = FALSE;
+volatile bool commFailureOccurred = FALSE;
 XBee xbee = XBee();
 
 void setup() {
@@ -29,12 +29,10 @@ void setup() {
   Serial.println(F("Starting set up . . ."));
   
   xbee.setSerial(Serial);
-
-  pinMode(RX_PIN, INPUT);
    
   // timer interrupt on 60 second interval
-  Timer1.initialize(ONE_MINUTE*100); // TODO change to every 10 min
-  Timer1.attachInterrupt(wakeUpTimer);
+  //Timer1.initialize(ONE_MINUTE); // TODO change to every 10 min
+  //Timer1.attachInterrupt(wakeUpTimer);
 
 
   /* TODO uncomment this
@@ -50,7 +48,7 @@ void setup() {
   */
 
   /* SD interfacing code */
-  //sd = init_sd(TXT_FILE, &SDerror);
+  sd = init_sd(TXT_FILE, &SDerror);
 
 
 }
@@ -60,13 +58,13 @@ void loop() {
   // TODO format + check if we have time for sendToBase
 
   // TODO interrupts not working
-  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
+  //sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
 
-  int8_t error;
+  bool error;
   /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
   error = FALSE;
-  float t = get_temp(t_h, & error);
+  int8_t t = get_temp(t_h, & error);
   if (error) {
     Serial.println(F(ERROR_TEMP));
   }
@@ -76,7 +74,7 @@ void loop() {
     sendtoBase(payload, xbee);
   }
   error = FALSE;
-  float h = get_humidity(t_h, & error);
+  int8_t h = get_humidity(t_h, & error);
   if (error) {
     Serial.println(F(ERROR_HUMIDITY));
   }
@@ -165,7 +163,7 @@ void loop() {
 
 void sendtoBase(char *msg, XBee xbee) {
 
-  int8_t error = FALSE;
+  bool error = FALSE;
 
   if (sendXbeeVerify(msg, xbee)) {
     Serial.println();
@@ -173,7 +171,7 @@ void sendtoBase(char *msg, XBee xbee) {
     // Error recovery
     if (commFailureOccurred) {
       // if old data failed to send, try to send now
-      //commFailureOccurred = recover_sensor_module_data(&sd, xbee);
+      commFailureOccurred = recover_sensor_module_data(&sd, xbee);
     }
   } else {
     Serial.println();
@@ -182,8 +180,8 @@ void sendtoBase(char *msg, XBee xbee) {
     // saves msg in the event that transmission fails
     // and SD card was initialized properly
     if (!SDerror) {
-      Serial.println(F("Begin writing to SD"));
-      //write_sensor_module_message(sd, msg, &error);
+      //Serial.println(F("Begin writing to SD"));
+      write_sensor_module_message(sd, msg, &error);
     }
   }
 
@@ -225,18 +223,18 @@ int8_t getTime(XBee xbee) {
       }
       msg[i] = '\0';
 
-      Serial.println(msg);
+      //Serial.println(msg);
 
       // this is a valid msg to handle
       if (strstr(msg, "{") && strstr(msg, "}")) {
-        Serial.println("valid");
+        //Serial.println("valid");
 
         // this message contains the time
         if (strstr(msg, "time response") != NULL) {
           char * time = extractTime(msg);
           if (time != NULL) {
-            Serial.println("Received current time: ");
-            Serial.println(time);
+            //Serial.println("Received current time: ");
+            //Serial.println(time);
             setSystemTime(time);
             return TRUE;
           }
@@ -321,8 +319,8 @@ struct TH init_dht(void) {
   struct TH t_h = {-1000,
     -1000
   };
-  float h;
-  float t;
+  int8_t h;
+  int8_t t;
 
   // initialize DHT sensor
   DHT dht(PIN_DHT, DHTTYPE);

@@ -1,4 +1,4 @@
-int8_t #ifndef SDCARD_H
+#ifndef SDCARD_H
 #define SDCARD_H
 
 #include "SD.h"
@@ -23,7 +23,7 @@ struct SD_card {
  * Purpose: Initialize the SD card and allows for reading and writing
  * Output: SD_card obj
  */
-struct SD_card init_sd(char *data_file, int8_t * error) {
+struct SD_card init_sd(char *data_file, bool * error) {
 
   struct SD_card sd;
   sd.data_file = data_file;
@@ -36,11 +36,11 @@ struct SD_card init_sd(char *data_file, int8_t * error) {
 
   // check if initialization is complete, and that an SD card is inserted
   if (SD.begin(PIN_SD) && (!digitalRead(PIN_SD_CHECK))) {
-    Serial.println(F("SD card: Initialization Succeeded"));
+    //Serial.println(F("SD card: Initialization Succeeded"));
   } else if (digitalRead(PIN_SD_CHECK)) {
-    Serial.println(F(ERROR_NOSD)); * error = TRUE;
+    //Serial.println(F(ERROR_NOSD)); * error = TRUE;
   } else {
-    Serial.println(F(ERROR_INITSD)); * error = TRUE;
+    //Serial.println(F(ERROR_INITSD)); * error = TRUE;
   }
 
   return sd;
@@ -50,7 +50,7 @@ struct SD_card init_sd(char *data_file, int8_t * error) {
  * Purpose: Prints file contents to serial monitor
  * Output: TRUE if successful, FALSE otherwise
  */
-int8_t read_sd(struct SD_card sd, int8_t * error) {
+bool read_sd(struct SD_card sd, bool * error) {
 
   //open file for reading
   sd.read_file = SD.open(sd.data_file, FILE_READ);
@@ -77,7 +77,7 @@ int8_t read_sd(struct SD_card sd, int8_t * error) {
  * Purpose: Write to SD file name and return whether or not write was successful
  * Output: TRUE if successful, FALSE otherwise
  */
-int8_t write_sensor_module_message(struct SD_card sd, char * message, int8_t *error) {
+bool write_sensor_module_message(struct SD_card sd, char * message, bool *error) {
 
   // open file for writing
   sd.write_file = SD.open(SENSOR_TXT, FILE_WRITE);
@@ -89,7 +89,7 @@ int8_t write_sensor_module_message(struct SD_card sd, char * message, int8_t *er
 
   } else {
     // write unsuccessful
-    Serial.println(F("SD card: Write fail"));
+    //Serial.println(F("SD card: Write fail"));
     *error = TRUE;
     return FALSE;
   }
@@ -107,9 +107,9 @@ int8_t write_sensor_module_message(struct SD_card sd, char * message, int8_t *er
 * and clear header and tail pointer. if any failed, commFailureOccurred = TRUE;
 * Output: TRUE if failed, FALSE if success
 */
-int8_t recover_sensor_module_data(struct SD_card * sd, XBee xbee) {
+bool recover_sensor_module_data(struct SD_card * sd, XBee xbee) {
 
-  char line[TX16_REQUEST_MAX_SIZE];
+  char line[PACKET_SIZE];
   int8_t count = 0;
   sd -> read_file = SD.open(SENSOR_TXT, O_RDWR);
   // As the file is written to, the head will change position
@@ -121,7 +121,7 @@ int8_t recover_sensor_module_data(struct SD_card * sd, XBee xbee) {
     while (sd -> read_file.available()) {
 
       // Read the next line
-      sd -> read_file.readStringUntil('\n').toCharArray(line, TX16_REQUEST_MAX_SIZE + 1);
+      sd -> read_file.readStringUntil('\n').toCharArray(line, PACKET_SIZE + 1);
 
       // Use count < n if you want to simulate values being sent in blocks
       if (sendXbeeVerify(line, xbee)) {
@@ -131,7 +131,7 @@ int8_t recover_sensor_module_data(struct SD_card * sd, XBee xbee) {
       }
       // Otherwise we had an error transmitting; break and return error
       else {
-        Serial.println(F("SD card: Error transmitting queued data."));
+        //Serial.println(F("SD card: Error transmitting queued data."));
         sd -> read_file.close();
         count++;
         return TRUE;
@@ -144,7 +144,7 @@ int8_t recover_sensor_module_data(struct SD_card * sd, XBee xbee) {
         sd -> write_file = SD.open(SENSOR_TXT, FILE_WRITE);
         sd -> write_file.truncate(0);
         sd -> write_file.close();
-        Serial.println(F("SD card: Sent all queued data."))
+        //Serial.println(F("SD card: Sent all queued data."));
         return FALSE;
       }
     }

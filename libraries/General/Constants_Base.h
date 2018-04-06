@@ -6,6 +6,8 @@
 
 #define MIDDLEMAN_PORT 8080
 
+#define PACKET_SIZE 80 // for xbee data
+
 #define HTTP_L1 "POST /api/web/sensor/bd16506f5a4d789465610a8806eec8b2/reading/add HTTP/1.1" // TODO dont post api key in public place
 #define HTTP_STATUS_LEN 12 // size of http response including status
 #define HTTP_SUCCESS "200"

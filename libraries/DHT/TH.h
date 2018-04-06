@@ -15,7 +15,7 @@ struct TH {
  * Purpose: Gets the temperature data
  * Output: temperature in Celsius
  */
-float get_temp(struct TH t_h, int8_t * error) {
+float get_temp(struct TH t_h, bool * error) {
   if (t_h.t != -1000) {
     return t_h.t;
   } * error = TRUE;
@@ -26,7 +26,7 @@ float get_temp(struct TH t_h, int8_t * error) {
  * Purpose: Gets the humidity data
  * Output: relative humidity percentage
  */
-float get_humidity(struct TH t_h, int8_t * error) {
+float get_humidity(struct TH t_h, bool * error) {
   // relative humidity must be 0+
   if (t_h.h >= 0 & t_h.h <= 100) {
     return t_h.h;
