@@ -8,7 +8,7 @@
 #include "PAR.h"
 #include "XBee.h"
 #include "SendXBee.h"
-#include "SDCard.h"
+//#include "SDCard.h"
 #include "TimerOne.h"
 #include "Polling.h"
 #include "TimeLib.h"
@@ -16,30 +16,31 @@
 
 /* Sensor module/transmitter code */
 
-int gotTime = FALSE; // dont start unless we set current time
-int SDerror = FALSE;// track whether SD is avail
-struct SD_card sd;
+int8_t gotTime = FALSE; // dont start unless we set current time
+int8_t SDerror = FALSE;// track whether SD is avail
+//struct SD_card sd;
 // track whether there is existing data on SD
-volatile int commFailureOccurred = FALSE;
+volatile int8_t commFailureOccurred = FALSE;
 XBee xbee = XBee();
 
 void setup() {
 
   Serial.begin(9600);
+  Serial.println(F("Starting set up . . ."));
+  
   xbee.setSerial(Serial);
 
-  pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
-
-  // interrupt 1) wake up on xbee communication
-  attachInterrupt(1, wakeUpCommunication, LOW);
-  // interrupt 2) timer interrupt on 60 second interval
-  Timer1.initialize(ONE_MINUTE / 20); // TODO change to every 10 min
+  pinMode(RX_PIN, INPUT);
+   
+  // timer interrupt on 60 second interval
+  Timer1.initialize(ONE_MINUTE*100); // TODO change to every 10 min
   Timer1.attachInterrupt(wakeUpTimer);
 
 
   /* TODO uncomment this
     // get current time from base station before starting
-    while (!gotTime) {
+    int8_t attempt = 0; // wait max 3 sec for time
+    while (!gotTime && attempt < 4) {
           delay(1000);
           Serial.println("Waiting for time before starting");
           gotTime = getTime(xbee);
@@ -49,21 +50,25 @@ void setup() {
   */
 
   /* SD interfacing code */
-  sd = init_sd(TXT_FILE, &SDerror);
+  //sd = init_sd(TXT_FILE, &SDerror);
+
 
 }
 
 void loop() {
 
+  // TODO format + check if we have time for sendToBase
+
+  // TODO interrupts not working
   sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
 
-  int error;
+  int8_t error;
   /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
   error = FALSE;
   float t = get_temp(t_h, & error);
   if (error) {
-    Serial.println(ERROR_TEMP);
+    Serial.println(F(ERROR_TEMP));
   }
   else {
     // TODO pass in time rather than NULL
@@ -73,29 +78,29 @@ void loop() {
   error = FALSE;
   float h = get_humidity(t_h, & error);
   if (error) {
-    Serial.println(ERROR_HUMIDITY);
+    Serial.println(F(ERROR_HUMIDITY));
   }
   else {
     char *payload = prepare_payload(ID_HUM, h, NULL);
     sendtoBase(payload, xbee);
   }
 
-  Serial.print("Temperature: ");
+  Serial.print(F("Temperature: "));
   Serial.print(t);
-  Serial.println(" °C");
-  Serial.print("Humidity: ");
+  Serial.println(F(" °C"));
+  Serial.print(F("Humidity: "));
   Serial.println(h);
 
   /* CO2 code */
   error = FALSE;
   float co2_volt = get_co2_voltage( & error);
   if (error) {
-    Serial.println(ERROR_GCO2V);
+    Serial.println(F(ERROR_GCO2V));
   }
   error = FALSE;
-  float co2_conc = get_co2_concentration(co2_volt, & error);
+  short co2_conc = get_co2_concentration(co2_volt, & error);
   if (error) {
-    Serial.println(ERROR_GCO2C);
+    Serial.println(F(ERROR_GCO2C));
     co2_conc = -1000;
   }
   else {
@@ -103,47 +108,55 @@ void loop() {
     sendtoBase(payload, xbee);
   }
 
-  Serial.print("CO2 Concentration: ");
+  Serial.print(F("CO2 Concentration: "));
   Serial.print(co2_conc);
-  Serial.println(" ppm");
+  Serial.println(F(" ppm"));
 
   /* Airflow code */
   error = FALSE;
   float airflow_MPH = get_wind_speed( & error);
   if (error) {
-    Serial.println(ERROR_AIRFLOW);
+    Serial.println(F(ERROR_AIRFLOW));
     airflow_MPH = -1000;
   }
   else {
     bool airflow_bool = get_airflow(airflow_MPH);
     if (airflow_bool) {
-      Serial.println("Airflow: Yes");
+      Serial.println(F("Airflow: Yes"));
     } else {
-      Serial.println("Airflow: No");
+      Serial.println(F("Airflow: No"));
     }
 
     char *payload = prepare_payload(ID_AF,airflow_bool, NULL);
     sendtoBase(payload, xbee);
   }
 
-  /* PAR code */
-  float par_volt, par_intns;
+
+  // TODO PAR reading keeps reading 0
+
+  /* PAR SENSOR */ 
+  error = FALSE;
+  float par_volt = get_par_voltage( & error);
+  if (error) {
+    Serial.println(ERROR_PARV);
+  }
 
   error = FALSE;
-  par_volt = get_par_voltage(&error);
+  float par_intensity = get_par_concentration(par_volt, &error);
   if (error) {
-    Serial.println(ERROR_GPARV);
+    Serial.println(ERROR_PARI);
+    par_intensity = -1000;
   }
-  error = FALSE;
-  par_intns = get_par_concentration(par_volt, &error);
-  if (error) {
-    Serial.println(ERROR_GPARC);
+  else {
+    char *payload = prepare_payload(ID_PAR,par_intensity, NULL);
+    sendtoBase(payload, xbee);
   }
-  Serial.print("PAR Concentration: ");
-  Serial.print(par_intns);
+
+  Serial.print("PAR Intensity: ");
+  Serial.print(par_intensity);
   Serial.println(" umol*m^(-2)*s^(-1)");
 
-  read_sd(sd, &error); // TODO remove after demo
+  //read_sd(sd, &error); // TODO remove after demo
 
 }
 
@@ -152,23 +165,25 @@ void loop() {
 
 void sendtoBase(char *msg, XBee xbee) {
 
-  int error = FALSE;
+  int8_t error = FALSE;
 
   if (sendXbeeVerify(msg, xbee)) {
+    Serial.println();
+    Serial.println(F("Msg sent over xbee"));
     // Error recovery
     if (commFailureOccurred) {
       // if old data failed to send, try to send now
-      commFailureOccurred = recover_sensor_module_data(&sd, xbee);
+      //commFailureOccurred = recover_sensor_module_data(&sd, xbee);
     }
-    Serial.println("Msg sent over xbee");
   } else {
+    Serial.println();
+    Serial.println(F("Msg failed to send over xbee"));
     commFailureOccurred = TRUE;
-    Serial.println("Msg failed to send over xbee");
     // saves msg in the event that transmission fails
     // and SD card was initialized properly
     if (!SDerror) {
-      Serial.println("Begin writing to SD");
-      write_sensor_module_message(sd, msg, &error);
+      Serial.println(F("Begin writing to SD"));
+      //write_sensor_module_message(sd, msg, &error);
     }
   }
 
@@ -178,7 +193,7 @@ void sendtoBase(char *msg, XBee xbee) {
 * Purpose: Get current time from base station
 * Output: FALSE if failed to obtain, TRUE otherwise
 */
-int getTime(XBee xbee) {
+int8_t getTime(XBee xbee) {
   Rx16Response rx16 = Rx16Response();
 
   char request[PACKET_SIZE] = "";
@@ -202,7 +217,7 @@ int getTime(XBee xbee) {
       xbee.getResponse().getRx16Response(rx16);
 
       char msg[PACKET_SIZE] = "";
-      int i;
+      int8_t i;
       // read the whole message
       for (i = 0; i < rx16.getDataLength(), i < PACKET_SIZE; i++) {
         data = rx16.getData(i);
@@ -240,7 +255,7 @@ int getTime(XBee xbee) {
 /*
 * Purpose: Parse the time receieved and set arduino time
 */
-int setSystemTime(char * time) {
+int8_t setSystemTime(char * time) {
 
   char hr[3];
   memcpy(hr, & time[0], 2);
@@ -312,7 +327,7 @@ struct TH init_dht(void) {
   // initialize DHT sensor
   DHT dht(PIN_DHT, DHTTYPE);
   dht.begin();
-  int attempt = 0; // track number of poll attempts
+  int8_t attempt = 0; // track number of poll attempts
 
   // try to poll data for 20 secs max
   do {

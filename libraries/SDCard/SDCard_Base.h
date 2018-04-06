@@ -1,26 +1,24 @@
-#ifndef SDCARD_H
+int8_t #ifndef SDCARD_H
 #define SDCARD_H
 
 #include "SD.h"
 #include "Constants_Base.h"
 
 struct SD_card {
-  String data_file; // file name to be written to and read from
+  char* data_file; // file name to be written to and read from
   File write_file;
   File read_file;
 
   // Header and tail for keeping track of queue position for reading and writing
   unsigned long base_station_head = 0;
   unsigned long base_station_tail = 0;
-  unsigned long sensor_module_head = 0;
-  unsigned long sensor_module_tail = 0;
 };
 
 /*
  * Purpose: Initialize the SD card and allows for reading and writing
  * Output: N/A
  */
- struct SD_card init_sd(String data_file, int *error) {
+ struct SD_card init_sd(char* data_file, int8_t *error) {
 
    struct SD_card sd;
    sd.data_file = data_file;
@@ -33,125 +31,27 @@ struct SD_card {
 
    // check if initialization is complete, and that an SD card is inserted
    if (SD.begin(PIN_SD) && digitalRead(PIN_SD_BASE_CHECK)) {
-    Serial.println(F("Initialization Succeeded"));
+    Serial.println(F("SD card: Initialization Succeeded"));
    }
    else if(!digitalRead(PIN_SD_BASE_CHECK)) {
-     Serial.println(ERROR_NOSD);
+     Serial.println(F(ERROR_NOSD));
      *error = TRUE;
     }
 
    else {
-     Serial.println(ERROR_INITSD);
+     Serial.println(F(ERROR_INITSD));
      *error = TRUE;
    }
 
    return sd;
   }
 
-/*
- * Purpose: Write to SD file name and return whether or not write was successful
- * Output: true or false
- */
-int write_sd(struct SD_card sd, float temperature_data, float humidity_data, float CO2_data, bool airflow_data, int *error) {
-
-  // open file for writing
-  sd.write_file = SD.open(sd.data_file, FILE_WRITE);
-
-  // check that file opened properly
-  if(sd.write_file) {
-
-    sd.write_file.print(F("{ \"id\":"));
-    sd.write_file.print(MODULE_ID);
-    sd.write_file.print(",");
-
-  sd.write_file.print(F("\"temperature\":"));
-  if(temperature_data == ERROR_VALUE) {
-      sd.write_file.print(F("NaN"));
-  }
-  else {
-    sd.write_file.print(temperature_data);
-  }
-  sd.write_file.print(F(","));
-
-  sd.write_file.print(F("\"humidity\":"));
-  if(humidity_data == ERROR_VALUE) {
-    sd.write_file.print(F("NaN"));
-  }
-  else {
-    sd.write_file.print(humidity_data);
-  }
-  sd.write_file.print(F(","));
-
-  sd.write_file.print(F("\"CO2\":"));
-  if(CO2_data == ERROR_VALUE) {
-    sd.write_file.print(F("NaN"));
-  }
-  else{
-      sd.write_file.print(CO2_data);
-  }
-
-   sd.write_file.print(F(","));
-
-  sd.write_file.print(F("\"air flow\":"));
-  if(CO2_data == ERROR_VALUE) {
-    sd.write_file.print(F("NaN"));
-  }
-  else{
-      if (airflow_data == TRUE) {
-        sd.write_file.print(F("Yes"));
-      }
-      else {
-        sd.write_file.print(F("No"));
-      }
-  }
-  sd.write_file.print(F(" }\n"));
-
-  }
-  else {
-  // write unsuccessful
-  *error = TRUE;
-    return 0;
-  }
-
-  sd.write_file.close();
-
-  return 1;
-}
-
-/*
- * Purpose: Read from SD file name and return whether or not read was successful
- * Output: true or false
- */
-int read_sd(struct SD_card sd, int *error){
-
-  //open file for reading
-  sd.read_file = SD.open(sd.data_file, FILE_READ);
-
-  if(sd.read_file) {
-
-    // Read from file until there's nothing else in it
-    while(sd.read_file.available()) {
-    Serial.write(sd.read_file.read());
-  }
-
-  }
-  else {
-    // read unsuccessful
-  *error = TRUE;
-  sd.read_file.close();
-  return 0;
-  }
-
-  sd.read_file.close();
-  return 1;
-}
-
 
 /*
  * Purpose: Writes base station message to SD Card in the event of an error in transmitting to web server. Increments head pointer.
  * Output: true or false
  */
- int write_base_station_message(struct SD_card sd, String unsent_message, int *error){
+ int8_t write_base_station_message(struct SD_card sd, char* unsent_message, int8_t *error){
 
   // open error file for writing
   sd.write_file = SD.open(BASE_TXT, FILE_WRITE);
@@ -184,10 +84,10 @@ int read_sd(struct SD_card sd, int *error){
 
  * Output: true or false
  */
-int recover_base_station_data(struct SD_card *sd, EthernetClient client){
+int8_t recover_base_station_data(struct SD_card *sd, EthernetClient client){
 
 	char line[PACKET_SIZE];
-	int error = FALSE;
+	int8_t error = FALSE;
 	sd->read_file = SD.open(BASE_TXT, O_RDWR);
 	// As the file is written to, the head will change position
 	sd->sensor_module_head = sd->read_file.position();
@@ -211,7 +111,7 @@ int recover_base_station_data(struct SD_card *sd, EthernetClient client){
 				}
 				// Otherwise we had an error transmitting; break and return error
 				else {
-					Serial.println(F("Error transmitting"));
+				Serial.println(F("SD card: Error transmitting queued data."));
 					sd->read_file.close();
 					return 1;
 				}
@@ -220,18 +120,17 @@ int recover_base_station_data(struct SD_card *sd, EthernetClient client){
 				if (sd->sensor_module_tail == sd->sensor_module_head)
 				{
 					sd->sensor_module_tail = 0;
-					Serial.println(F("We have reached the end of the file"));
 					sd->read_file.close();
 					sd->write_file = SD.open(BASE_TXT, FILE_WRITE);
 					sd->write_file.truncate(0);
 					sd->write_file.close();
+          Serial.println(F("SD card: Sent all queued data."))
 					return 0;
 				}
 		}
 	}
 	else {
 		// read unsuccessful
-		Serial.println(F("Didn't open"));
 		sd->read_file.close();
 		return 1;
 	}

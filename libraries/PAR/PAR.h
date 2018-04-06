@@ -19,10 +19,10 @@
  *           (mV)
  *  Output: A float containing the PAR sensor voltage (mV)
  */
-float get_par_voltage(int *error) {
+float get_par_voltage(int8_t *error) {
   int sensor_value;
 
-  int attempt = 0; // track number of poll attempts
+  int8_t attempt = 0; // track number of poll attempts
 
   // try to poll data for 1 sec max
   do {
@@ -62,7 +62,7 @@ float get_par_voltage(int *error) {
  *  Input: A float containing the PAR sensor voltage (mV)
  *  Output: A float containing the light intensity (umol*m^(-2)*s^(-1)))
  */
-float get_par_concentration(float voltage, int *error) {
+float get_par_concentration(float voltage, int8_t *error) {
   // check for invalid input
   if(voltage < 0 || voltage > 40) {
     *error = TRUE;

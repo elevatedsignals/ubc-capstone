@@ -10,10 +10,10 @@
  *           millivolts (mV)
  *  Output: A float containing the CO2 sensor voltage (mV)
  */
-float get_co2_voltage(int * error) {
+float get_co2_voltage(int8_t * error) {
   int sensor_value;
 
-  int attempt = 0; // track number of poll attempts
+  int8_t attempt = 0; // track number of poll attempts
 
   // try to poll data for 1 sec max
   do {
@@ -48,7 +48,7 @@ float get_co2_voltage(int * error) {
  *  Input: A float containing the CO2 sensor voltage (mV)
  *  Output: A float containing the CO2 concentration (ppm)
  */
-float get_co2_concentration(float voltage, int *error) {
+short get_co2_concentration(float voltage, int8_t *error) {
   // check for invalid input
   if(voltage < 400 || voltage > 2000) {
     *error = TRUE;

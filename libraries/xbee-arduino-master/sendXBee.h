@@ -8,7 +8,7 @@
 * the destination receieved it (via an ACK)
 * Output: TRUE if destination receieved it, FALSE otherwise
 */
-int sendXbeeVerify(char * msg, XBee xbee) {
+int8_t sendXbeeVerify(char * msg, XBee xbee) {
 
   // 16-bit addressing: Enter address of remote XBee, typically the coordinator
   Tx16Request tx = Tx16Request(DEST_ADDRESS, (uint8_t * ) msg, strlen(msg));
@@ -43,7 +43,7 @@ int sendXbeeVerify(char * msg, XBee xbee) {
 * Purpose: Send msg over Xbee with Address addr, but
 * does not check to see if destination receieved it
 */
-int sendXbeeNoVerify(char * msg, uint16_t addr, XBee xbee) {
+int8_t sendXbeeNoVerify(char * msg, uint16_t addr, XBee xbee) {
   Tx16Request tx = Tx16Request(addr, (uint8_t * ) msg, strlen(msg));
   xbee.send(tx);
 }

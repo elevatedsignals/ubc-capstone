@@ -4,7 +4,7 @@
 /*
 *  Purpose: Formats sensor data for upload
 */
-char* prepare_payload(int cap_id, float val, char *time_string) {
+char* prepare_payload(int cap_id, short val, char *time_string) {
 
   char payload[100] = "";
 
