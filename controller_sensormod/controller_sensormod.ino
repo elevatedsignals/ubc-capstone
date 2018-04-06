@@ -126,21 +126,21 @@ void loop() {
     sendtoBase(payload, xbee);
   }
 
-  /* TODO PAR SENSOR */
-  error = FALSE;
-  float par_volt = get_par_voltage( & error);
-  if (error) {
-    Serial.println(ERROR_PARV);
-  }
-  error = FALSE;
-  float par_intensity = get_par_concentration(par_volt, & error);
-  if (error) {
-    Serial.println(ERROR_PARI);
-    par_intensity = -1000;
-  }
+  /* PAR code */
+  float par_volt, par_intns;
 
-  Serial.print("PAR Intensity: ");
-  Serial.print(par_intensity);
+  error = FALSE;
+  par_volt = get_par_voltage(&error);
+  if (error) {
+    Serial.println(ERROR_GPARV);
+  }
+  error = FALSE;
+  par_intns = get_par_concentration(par_volt, &error);
+  if (error) {
+    Serial.println(ERROR_GPARC);
+  }
+  Serial.print("PAR Concentration: ");
+  Serial.print(par_intns);
   Serial.println(" umol*m^(-2)*s^(-1)");
 
   read_sd(sd, &error); // TODO remove after demo
