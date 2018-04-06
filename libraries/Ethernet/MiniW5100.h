@@ -36,6 +36,8 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
 
   if(client.connect(middleman_server, MIDDLEMAN_PORT) == 1) {
 
+    Serial.println(F("Connected to Middleman Server."));
+
   client.println(HTTP_L1);
   client.println("Host: ec2-52-202-121-17.compute-1.amazonaws.com");
   client.println("Connection: close");
@@ -69,7 +71,6 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
   int i;
   for (i = 0; i < HTTP_STATUS_LEN; i++) {
     char c = client.read();
-    Serial.print(c);
     response[i] = c;
   }
   response[i] = '\0';

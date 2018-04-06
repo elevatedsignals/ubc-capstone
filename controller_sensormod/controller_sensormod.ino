@@ -27,6 +27,7 @@ void setup() {
   Serial.begin(9600);
   xbee.setSerial(Serial);
 
+
   pinMode(RX_PIN, INPUT); // TODO is this needed? its also called in sleepNow()
 
   // interrupt 1) wake up on xbee communication
@@ -35,6 +36,7 @@ void setup() {
   // interrupt 2) timer interrupt on 60 second interval
   Timer1.initialize(ONE_MINUTE / 20); // TODO change to every 10 min
   Timer1.attachInterrupt(wakeUpTimer);
+  
 
   /* TODO uncomment this
     // get current time from base station before starting
