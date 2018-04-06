@@ -1,8 +1,8 @@
 #ifndef MINIW5100_H
 #define MINIW5100_H
 
-#include "constants_bs.h"
-#include "constants.h"
+#include "Constants_Base.h"
+#include "Constants.h"
 #include <Ethernet.h>
 
 const byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };

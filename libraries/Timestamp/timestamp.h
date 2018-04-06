@@ -1,8 +1,8 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-#include "constants.h"
-#include "constants_bs.h"
+#include "Constants.h"
+#include "Constants_Base.h"
 
 /* Enter a MAC address for your controller below.
   * Newer Ethernet shields have a MAC address

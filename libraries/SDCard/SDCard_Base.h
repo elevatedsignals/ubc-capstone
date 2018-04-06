@@ -2,7 +2,7 @@
 #define SDCARD_H
 
 #include "SD.h"
-#include "constants_bs.h"
+#include "Constants_Base.h"
 
 struct SD_card {
   String data_file; // file name to be written to and read from
