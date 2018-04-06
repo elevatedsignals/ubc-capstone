@@ -1,25 +1,16 @@
 #ifndef CO2_H
 #define CO2_H
 
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
-#include "constants.h"
+#include "Constants.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#define TRUE 1
-#define FALSE 0
 
 /*
  *  Purpose: Polls the Infrared CO2 Sensor till it obtains a sensor voltage in
  *           millivolts (mV)
  *  Output: A float containing the CO2 sensor voltage (mV)
  */
-float get_co2_voltage(int *error) {
+float get_co2_voltage(int * error) {
   int sensor_value;
 
   int attempt = 0; // track number of poll attempts

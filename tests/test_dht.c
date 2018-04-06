@@ -13,16 +13,17 @@
  */
 int main(void) {
 
-  struct TH t_h = {-1000,-1000};
+  struct TH t_h = {-1000,
+    -1000
+  };
   int error;
 
   // no temperature available, should return error
   error = FALSE;
-  float x = get_temp(t_h, &error);
+  float x = get_temp(t_h, & error);
   if (error) {
     printf("Pass 1: temperature\n");
-  }
-  else {
+  } else {
     printf("Fail 1: temperature\n");
   }
 
@@ -30,33 +31,30 @@ int main(void) {
   error = FALSE;
   float t = (float) 50;
   t_h.t = t;
-  t = get_temp(t_h, &error);
+  t = get_temp(t_h, & error);
   if ((!error) & (t == t_h.t)) {
     printf("Pass 2: temperature\n");
-  }
-  else {
+  } else {
     printf("Fail 2: temperature\n");
   }
 
   // negative temperature is valid, should return it
   error = FALSE;
-  t = (float) -10;
+  t = (float) - 10;
   t_h.t = t;
-  t = get_temp(t_h, &error);
+  t = get_temp(t_h, & error);
   if ((!error) & (t == t_h.t)) {
     printf("Pass 3: temperature\n");
-  }
-  else {
+  } else {
     printf("Fail 3: temperature\n");
   }
 
   // no humidity available, should return error
   error = FALSE;
-  get_humidity(t_h, &error);
+  get_humidity(t_h, & error);
   if (error) {
     printf("Pass 1: humidity\n");
-  }
-  else {
+  } else {
     printf("Fail 1: humidity\n");
   }
 
@@ -64,23 +62,21 @@ int main(void) {
   error = FALSE;
   float h = (float) 40;
   t_h.h = h;
-  h = get_humidity(t_h, &error);
+  h = get_humidity(t_h, & error);
   if ((!error) & (h == t_h.h)) {
     printf("Pass 2: humidity\n");
-  }
-  else {
+  } else {
     printf("Fail 2: humidity\n");
   }
 
   // negative humidity is invalid, should return error
   error = FALSE;
-  h = (float) -1;
+  h = (float) - 1;
   t_h.h = h;
-  get_humidity(t_h, &error);
+  get_humidity(t_h, & error);
   if (error) {
     printf("Pass 3: humidity\n");
-  }
-  else {
+  } else {
     printf("Fail 3: humidity\n");
   }
 
@@ -88,11 +84,10 @@ int main(void) {
   error = FALSE;
   h = (float) 101;
   t_h.h = h;
-  get_humidity(t_h, &error);
+  get_humidity(t_h, & error);
   if (error) {
     printf("Pass 4: humidity\n");
-  }
-  else {
+  } else {
     printf("Fail 4: humidity\n");
   }
 }

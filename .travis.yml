@@ -7,8 +7,11 @@ before_install:
   - tar xf arduino-1.8.4-linux64.tar.xz
   - sudo mv arduino-1.8.4 /usr/local/share/arduino
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
-  - mv `find libraries/ -type f` controller
+  - cp -r `find libraries/ -type f` controller_sensormod
+  - cp -r `find libraries/ -type f` controller_base
 install:
+  - arduino --install-library "Time"
   - arduino --install-library "SD"
 script:
-  - arduino --verify --board arduino:avr:uno controller/controller.ino
+  - arduino --verify --board arduino:avr:uno controller_sensormod/controller_sensormod.ino
+  - arduino --verify --board arduino:avr:uno controller_base/controller_base.ino
