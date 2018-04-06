@@ -31,7 +31,7 @@ EthernetClient init_ethernet(EthernetClient client) {
  /*
  *  Purpose: Connects to the server, uploads sensor data, and validates that the
  */
-EthernetClient make_http_request(EthernetClient client, char* payload, int *error) {
+EthernetClient make_http_request(EthernetClient client, char* payload, bool *error) {
   client.stop(); // close any previous connections to free socket
 
   if(client.connect(middleman_server, MIDDLEMAN_PORT) == 1) {
@@ -54,7 +54,7 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
   }
 
   // wait max 3 seconds for response
-  int attempt = 0;
+  int8_t attempt = 0;
   while(!client.available() && attempt < 4) {
     delay(DELAY_TIME);
     attempt++;
@@ -68,7 +68,7 @@ EthernetClient make_http_request(EthernetClient client, char* payload, int *erro
 
   // read response
   char response[HTTP_STATUS_LEN+1];
-  int i;
+  int8_t i;
   for (i = 0; i < HTTP_STATUS_LEN; i++) {
     char c = client.read();
     response[i] = c;

@@ -11,7 +11,7 @@
 #include "SDCard.h"
 #include "TimerOne.h"
 #include "Polling.h"
-#include "TimeLib.h"
+//#include "TimeLib.h"
 #include "Format.h"
 
 /* Sensor module/transmitter code */
@@ -30,9 +30,9 @@ void setup() {
   
   xbee.setSerial(Serial);
    
-  // timer interrupt on 60 second interval
-  //Timer1.initialize(ONE_MINUTE); // TODO change to every 10 min
-  //Timer1.attachInterrupt(wakeUpTimer);
+  // TODO not working?
+  Timer1.initialize(ONE_MINUTE); // TODO change to every 10 min
+  Timer1.attachInterrupt(wakeUpTimer);
 
 
   /* TODO uncomment this
@@ -58,7 +58,7 @@ void loop() {
   // TODO format + check if we have time for sendToBase
 
   // TODO interrupts not working
-  //sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
+  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
 
   bool error;
   /* DHT temperature and humidity code */
@@ -230,7 +230,7 @@ int8_t getTime(XBee xbee) {
         //Serial.println("valid");
 
         // this message contains the time
-        if (strstr(msg, "time response") != NULL) {
+       /* if (strstr(msg, "time response") != NULL) {
           char * time = extractTime(msg);
           if (time != NULL) {
             //Serial.println("Received current time: ");
@@ -239,7 +239,7 @@ int8_t getTime(XBee xbee) {
             return TRUE;
           }
 
-        }
+        }*/
 
       }
 
@@ -253,6 +253,7 @@ int8_t getTime(XBee xbee) {
 /*
 * Purpose: Parse the time receieved and set arduino time
 */
+/*
 int8_t setSystemTime(char * time) {
 
   char hr[3];
@@ -277,13 +278,14 @@ int8_t setSystemTime(char * time) {
   setTime(atoi(hr), atoi(minute), atoi(sec), atoi(day), atoi(month), atoi(yr));
 
   return 0;
-}
+}*/
 
 /*
 * Parse the time from the response
 * Output: the full timestamp, or NULL if msg
 * did not contain a timestamp
 */
+/*
 char * extractTime(char * message) {
 
   char msg[PACKET_SIZE];
@@ -304,7 +306,7 @@ char * extractTime(char * message) {
   }
 
   return NULL;
-}
+}*/
 
 /*
  * Purpose: initializes the DHT sensor and polls the sensor till it obtains

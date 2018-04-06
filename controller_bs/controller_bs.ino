@@ -14,7 +14,7 @@ EthernetClient client;
 XBee xbee = XBee();
 // track whether data has queued in SD storage
 //volatile int commFailureOccurred = FALSE;
-//int SDerror = FALSE;
+//bool SDerror = FALSE;
 
 void setup() {
 
@@ -53,7 +53,7 @@ void loop() {
 
 void upload(char *payload, EthernetClient client) {
 
- int error = FALSE;
+ bool error = FALSE;
      client = make_http_request(client, payload, &error);
      if(error) {
        Serial.println(F("Failed to make HTTP request."));
@@ -94,7 +94,7 @@ void requestHandler() {
 
       char msg[PACKET_SIZE] = "";
 
-      int i;
+      int8_t i;
       // read the whole message
       for (i = 0; i < rx16.getDataLength(), i < 100; i++) {
         data = rx16.getData(i);
@@ -102,7 +102,7 @@ void requestHandler() {
       }
       msg[i] = '\0';
 
-      int type = requestParser(msg);
+      int8_t type = requestParser(msg);
 
       if (type == 0) { // contains sensor data
         // TODO send to server
@@ -128,7 +128,7 @@ void requestHandler() {
 * Returns 0 if request to send sensor data to server
 * Returns 1 if request for current time
 */
-int requestParser(char * msg) {
+int8_t requestParser(char * msg) {
 
   // this is a valid msg to handle
   if (strstr(msg, "{") && strstr(msg, "}")) {
@@ -152,7 +152,7 @@ int requestParser(char * msg) {
 * Purpose: Responds to client with srcAddr with timestamp
 * Output: TRUE when completed
 */
-int respondToClient(char * time, uint16_t srcAddr) {
+bool respondToClient(char * time, uint16_t srcAddr) {
 
   char response[PACKET_SIZE] = "";
   // add obtained time to response
