@@ -21,6 +21,7 @@
 #define ERROR_GCO2C "get_co2_concentration error: input/output outside expected range (400 - 2000/0 - 5000)\n"
 #define ERROR_NOSD "Error: No SD Card Inserted"
 #define ERROR_INITSD "Error: Failed to initialize SD Card"
-
+#define ERROR_GPARV "get_par_voltage error: output outside expected range (0 - 40)\n"
+#define ERROR_GPARC "get_par_concentration error: input/output outside expected range (0 - 40/0 - 4000)\n"
 
 #endif
