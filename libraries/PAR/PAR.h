@@ -1,16 +1,25 @@
 #ifndef PAR_H
 #define PAR_H
 
-#include "Constants.h"
+#if ARDUINO >= 100
+ #include "Arduino.h"
+#else
+ #include "WProgram.h"
+#endif
+
+#include "constants.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#define TRUE 1
+#define FALSE 0
 
 /*
  *  Purpose: Polls the PAR Sensor till it obtains a sensor voltage in millivolts
  *           (mV)
  *  Output: A float containing the PAR sensor voltage (mV)
  */
-float get_par_voltage(int * error) {
+float get_par_voltage(int *error) {
   int sensor_value;
 
   int attempt = 0; // track number of poll attempts
@@ -22,22 +31,24 @@ float get_par_voltage(int * error) {
     // read voltage
     sensor_value = analogRead(PIN_PAR);
     attempt++;
-  } while (isnan(sensor_value) && attempt < 10);
+  } while(isnan(sensor_value) && attempt < 10);
 
   // signal error if value is still invalid after 10th attempt
-  if (isnan(sensor_value) && attempt >= 10) { * error = TRUE;
-    return (float) sensor_value;
+  if(isnan(sensor_value) && attempt >= 10) {
+    *error = TRUE;
+    return (float)sensor_value;
   }
 
   // analog signal is first calibrated to account for amplifier gain
-  // R1 = 392k, R2 = 4.3k, G = 1 + R1/R2
-  float voltage = sensor_value / (1 + (392000.0 / 4300.0));
+  // R = 440, G = 1 + (49.4e3)/R
+  float voltage = sensor_value / (1 + (49400 / 440.0));
 
   // next, signal is converted to voltage value in millivolts (mV)
   voltage *= (5000 / 1023.0);
 
   // check for invalid output
-  if (voltage < 0 || voltage > 40) { * error = TRUE;
+  if(voltage < 0 || voltage > 40) {
+    *error = TRUE;
     return voltage;
   }
 
@@ -51,9 +62,10 @@ float get_par_voltage(int * error) {
  *  Input: A float containing the PAR sensor voltage (mV)
  *  Output: A float containing the light intensity (umol*m^(-2)*s^(-1)))
  */
-float get_par_concentration(float voltage, int * error) {
+float get_par_concentration(float voltage, int *error) {
   // check for invalid input
-  if (voltage < 0 || voltage > 40) { * error = TRUE;
+  if(voltage < 0 || voltage > 40) {
+    *error = TRUE;
     return voltage;
   }
 
@@ -61,7 +73,8 @@ float get_par_concentration(float voltage, int * error) {
   float light_intensity = voltage * 100.0;
 
   // check for invalid output
-  if (light_intensity < 0 || light_intensity > 4000) { * error = TRUE;
+  if(light_intensity < 0 || light_intensity > 4000) {
+    *error = TRUE;
     return light_intensity;
   }
 
