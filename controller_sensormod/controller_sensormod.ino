@@ -8,60 +8,39 @@
 #include "PAR.h"
 #include "XBee.h"
 #include "SendXBee.h"
-#include "SDCard.h"
+//#include "SDCard.h"
 #include "TimerOne.h"
-#include "Polling.h"
+//#include "Polling.h"
 //#include "TimeLib.h"
 #include "Format.h"
 
 /* Sensor module/transmitter code */
 
-bool gotTime = FALSE; // dont start unless we set current time
-bool SDerror = FALSE;// track whether SD is avail
-struct SD_card sd;
+//bool gotTime = FALSE; // dont start unless we set current time
+//bool SDerror = FALSE;// track whether SD is avail
+//struct SD_card sd;
+
 // track whether there is existing data on SD
-volatile bool commFailureOccurred = FALSE;
+//volatile bool commFailureOccurred = FALSE;
 XBee xbee = XBee();
 
-void setup() {
+void wakeUpTimer()         // here the interrupt is handled after wakeup
+{
+  detachInterrupt(1);      // disables interrupt 1 on pin 3 so the 
+  sleep_disable();         // first thing after waking from sleep:
+                           // disable sleep...
 
-  Serial.begin(9600);
-  Serial.println(F("Starting set up . . ."));
-  
-  xbee.setSerial(Serial);
-   
-  // TODO not working?
-  Timer1.initialize(ONE_MINUTE); // TODO change to every 10 min
-  Timer1.attachInterrupt(wakeUpTimer);
+  power_all_enable();      // re-enable all peripherals                            
+                             
+  delay(1000);             // wait for arduino to fully wake up
 
+  //Run main program...
+  Serial.println();
+  Serial.println("We are now taking readings ");    // for testing
+  Serial.println();
 
-  /* TODO uncomment this
-    // get current time from base station before starting
-    int8_t attempt = 0; // wait max 3 sec for time
-    while (!gotTime && attempt < 4) {
-          delay(1000);
-          Serial.println("Waiting for time before starting");
-          gotTime = getTime(xbee);
-      }
-    // set default reference voltage (5V)
-    analogReference(DEFAULT);
-  */
-
-  /* SD interfacing code */
-  sd = init_sd(TXT_FILE, &SDerror);
-
-
-}
-
-void loop() {
-
-  // TODO format + check if we have time for sendToBase
-
-  // TODO interrupts not working
-  sleepNow(); // go to sleep and wake up on either timer/xbee interrupt
-
-  bool error;
-  /* DHT temperature and humidity code */
+     bool error;
+ /* DHT temperature and humidity code */
   struct TH t_h = init_dht();
   error = FALSE;
   int8_t t = get_temp(t_h, & error);
@@ -74,6 +53,9 @@ void loop() {
     sendtoBase(payload, xbee);
   }
   error = FALSE;
+  
+  
+  
   int8_t h = get_humidity(t_h, & error);
   if (error) {
     Serial.println(F(ERROR_HUMIDITY));
@@ -83,11 +65,13 @@ void loop() {
     sendtoBase(payload, xbee);
   }
 
+  /*
   Serial.print(F("Temperature: "));
   Serial.print(t);
   Serial.println(F(" °C"));
   Serial.print(F("Humidity: "));
   Serial.println(h);
+  */
 
   /* CO2 code */
   error = FALSE;
@@ -106,10 +90,11 @@ void loop() {
     sendtoBase(payload, xbee);
   }
 
+/*
   Serial.print(F("CO2 Concentration: "));
   Serial.print(co2_conc);
   Serial.println(F(" ppm"));
-
+*/
   /* Airflow code */
   error = FALSE;
   float airflow_MPH = get_wind_speed( & error);
@@ -148,15 +133,69 @@ void loop() {
   else {
     char *payload = prepare_payload(ID_PAR,par_intensity, NULL);
     sendtoBase(payload, xbee);
+   
   }
-
-  Serial.print("PAR Intensity: ");
+  /*
+        Serial.print("PAR Intensity: ");
   Serial.print(par_intensity);
-  Serial.println(" umol*m^(-2)*s^(-1)");
-
-  //read_sd(sd, &error); // TODO remove after demo
+  Serial.println(" umol*m^(-2)*s^(-1)"); */
 
 }
+void setup() {
+
+  Serial.begin(9600);
+  Serial.println(F("Starting set up . . ."));
+  
+  xbee.setSerial(Serial);
+
+
+  /* TODO uncomment this
+    // get current time from base station before starting
+    int8_t attempt = 0; // wait max 3 sec for time
+    while (!gotTime && attempt < 4) {
+          delay(1000);
+          Serial.println("Waiting for time before starting");
+          gotTime = getTime(xbee);
+      }
+    // set default reference voltage (5V)
+    analogReference(DEFAULT);
+  */
+
+  /* SD interfacing code */
+  //sd = init_sd(TXT_FILE, &SDerror);
+
+  // TODO not working?
+  Timer1.initialize(ONE_MINUTE / 6); // TODO change to every 10 min
+  Timer1.attachInterrupt(wakeUpTimer);
+
+
+}
+
+void sleepNow()         // here we put the arduino to sleep
+{   
+  delay(1000);         // ensure the last command is complete before entering sleep mode
+
+
+  //Timer1.initialize(ONE_MINUTE / 6);           // initialize timer1, and set a 60 second period
+  Timer1.attachInterrupt(wakeUpTimer);    // attaches callback() as a timer overflow interrupt  
+
+  
+  set_sleep_mode(SLEEP_MODE_IDLE);   // sleep mode is set here
+
+  sleep_enable();          // enables the sleep bit in the mcucr register
+                           // so sleep is possible. just a safety pin 
+
+  sleep_mode();            // here the device is actually put to sleep!!
+                           // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+                        
+}
+
+void loop() {
+
+  sleepNow();
+  
+}
+
 
 
 /* Helper Functions */
@@ -169,22 +208,21 @@ void sendtoBase(char *msg, XBee xbee) {
     Serial.println();
     Serial.println(F("Msg sent over xbee"));
     // Error recovery
-    if (commFailureOccurred) {
+ //   if (commFailureOccurred) {
       // if old data failed to send, try to send now
-      commFailureOccurred = recover_sensor_module_data(&sd, xbee);
-    }
+ //     commFailureOccurred = recover_sensor_module_data(&sd, xbee);
+ //   }
   } else {
     Serial.println();
     Serial.println(F("Msg failed to send over xbee"));
-    commFailureOccurred = TRUE;
+    //commFailureOccurred = TRUE;
     // saves msg in the event that transmission fails
     // and SD card was initialized properly
-    if (!SDerror) {
-      //Serial.println(F("Begin writing to SD"));
-      write_sensor_module_message(sd, msg, &error);
-    }
+    //if (!SDerror) {
+    //  Serial.println(F("Begin writing to SD"));
+    //  write_sensor_module_message(sd, msg, &error);
+   // }
   }
-
 }
 
 /*
@@ -349,3 +387,5 @@ struct TH init_dht(void) {
   }
   return t_h;
 }
+
+
